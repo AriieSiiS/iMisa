@@ -1,0 +1,31 @@
+<ion-header>
+ 
+  <ion-toolbar color="dark" class="ion-color ion-color-dark md hydrated">
+    <ion-buttons slot="secondary">
+      <ion-button fill="solid" routerLink="/home" routerDirection="root">
+        <ion-icon slot="start" color="primary" name="home"></ion-icon> Misa
+      </ion-button>
+    </ion-buttons>
+      <ion-buttons slot="start">
+        <ion-back-button [defaultHref]="defaultBackLink"></ion-back-button>
+      </ion-buttons>
+  <ion-title>Bestell History</ion-title>
+</ion-toolbar>
+</ion-header>
+
+<ion-content >
+<ion-content >
+  <ion-list lines="full">
+      <ion-item *ngFor="let orderHistoryItem of arrOrderHistory; let i=index">
+      
+          <ion-icon slot="start" color="primary"  name="refresh-circle" (click)="AddToOrder(arrOrderHistory[i])"></ion-icon>       
+      
+        <ion-label>{{orderHistoryItem.dateadded}}</ion-label>
+        <ion-note  slot="end">{{orderHistoryItem.products}}</ion-note>
+        <ion-icon slot="end" color="primary"  name="arrow-dropright" (click)="editOrderHistory(arrOrderHistory[i])"></ion-icon>
+      </ion-item>
+    </ion-list>
+  </ion-content>
+    <!-- <app-camera-scanner></app-camera-scanner> -->
+</ion-content>
+

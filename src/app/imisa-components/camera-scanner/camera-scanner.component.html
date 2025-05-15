@@ -1,0 +1,7 @@
+
+<ion-fab  *ngIf="this.commonService.canUseCameraScanning" 
+vertical="bottom"  horizontal="center" slot="fixed">  
+  <ion-fab-button color="warning" (click)="scanBarcode()">  
+    <ion-icon name="qr-scanner" color="dark"></ion-icon> 
+  </ion-fab-button>  
+</ion-fab  > 

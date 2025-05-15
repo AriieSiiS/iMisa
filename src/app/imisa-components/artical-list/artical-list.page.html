@@ -1,0 +1,47 @@
+<ion-header>
+    <ion-toolbar color="dark" class="ion-color ion-color-dark md hydrated">
+      <ion-buttons start>
+        <ion-back-button text="Articals" slot="start" icon="arrow-dropleft" [defaultHref]="defaultBackLink"></ion-back-button>
+        
+      </ion-buttons>
+      <!-- <ion-buttons *ngIf="canScanUsingCamera==true" slot="secondary">
+          <ion-button fill="solid" color="warning" (click)="ScanItem()">
+            <ion-icon class="btn-scan-icon" slot="start" name="qr-scanner">Scan</ion-icon>
+            <span class="btn-scan-span">Scan</span>
+          </ion-button>
+        </ion-buttons> -->
+      <!-- <ion-buttons end>
+          <ion-button color="primary">Primary</ion-button>
+          <button color="light" ion-button icon-start (click)="ScanItem()">
+              <ion-icon name="qr-scanner"></ion-icon>
+              Scan
+            </button>
+        </ion-buttons> -->
+      <!-- <ion-title>Articals</ion-title> -->
+    </ion-toolbar>
+  </ion-header>
+  <ion-list-header class="serch-bar-bg">
+      <ion-searchbar  class="serch-text-bg"   placeholder="Search..." [(ngModel)]="searchValue" (input)="ArticalItemSearch($event.target.value)" ></ion-searchbar>
+      <ion-label>Wild Search</ion-label>
+      <ion-toggle [(ngModel)]="IsWildSearchActive" mode="ios" 
+      color="success" (ionChange)="wildSearchToggleChange($event)" ></ion-toggle>
+    </ion-list-header>
+<ion-content>
+  <ion-content>
+        <ion-list lines="full">
+          <ion-item  *ngFor="let articalItem of arrArticalsItem; let i=index;" >
+              <ion-icon slot="start" color="primary" name="add-circle" (click)="addArticalInOrder(arrArticalsItem[i])" ></ion-icon>
+            <ion-label>{{articalItem.descinternal}}</ion-label>
+            <ion-icon slot="end" color="primary"  icon="arrow-dropright" (click)="editArtical(arrArticalsItem[i])"></ion-icon>
+          </ion-item>
+          <!-- <ion-item >
+              <ion-icon slot="start" color="primary" name="add-circle" (click)="addArticalInOrder()" ></ion-icon>
+            <ion-label>Artical item 2</ion-label>
+            <ion-icon slot="end" name="arrow-forward" (click)="editArtical()"></ion-icon>
+          </ion-item> -->
+        </ion-list>
+       
+      
+      </ion-content>
+      <app-camera-scanner></app-camera-scanner>
+</ion-content>

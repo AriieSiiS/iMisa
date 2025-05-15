@@ -1,0 +1,22 @@
+<ion-header>
+  <ion-button (click)="openSettings()">
+    <ion-icon name="camera"></ion-icon>
+    <ion-label>Settings</ion-label>
+  </ion-button>
+</ion-header>
+<ion-content class="iMisaHomeScreen" >
+  <div class="home-iMisaLogo">
+    <img src="/assets/img/iMisa-logo.png" >
+  </div>
+  <div class="home-iMisabuttons">
+    <ion-button color="primary" expand="block" class="btn-iMisaAction" (click)="ShowOrders()">Materialbeschaffung</ion-button>
+    <ion-button color="primary" expand="block" class="btn-iMisaAction" (click)="submitOrder()">Submit Your Order</ion-button>
+  </div>
+
+  <ion-footer>
+      <div class="pos-deviceid">
+     <strong>{{_uniqueDeviceId}}</strong>
+      </div>
+  </ion-footer>
+</ion-content> 
+

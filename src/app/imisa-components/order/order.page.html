@@ -1,0 +1,49 @@
+<!-- <ion-header>
+  <ion-toolbar>
+    <ion-title>order</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-button (click)="EditOrder()"  routerDirection="forward">Edit</ion-button>
+</ion-content> -->
+<ion-header>
+  <ion-toolbar color="dark" class="ion-color ion-color-dark md hydrated">
+    <ion-buttons slot="secondary">
+      <ion-button fill="solid" routerLink="/home" routerDirection="root">
+        <ion-icon slot="start" color="primary" name="home"></ion-icon> Misa &nbsp;&nbsp;
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Bestellung</ion-title>
+    <ion-buttons slot="primary" *ngIf="!IsHistoicalOrder" (click)="ShowEditButtons()">
+      <ion-button fill="solid" color="primary">
+        <ion-icon slot="start" name="create"></ion-icon> Edit &nbsp;
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-content>
+  <!-- List of Text Items -->
+  <ion-list lines="full"  *ngIf="arrOrder.length>0">
+<!-- <div> -->
+    <ion-item-sliding  *ngFor="let item of arrOrder;">
+      <ion-item >
+        <ion-icon *ngIf="canShowEdit" slot="start" color="danger" (click)="deleteOrder(item)" name="remove-circle"></ion-icon>
+        <ion-label>{{item.productDescription}}</ion-label>
+        <ion-note slot="end">{{item.amount}}</ion-note>
+        <ion-icon slot="end" color="primary" name="arrow-dropright" (click)="EditOrder(item)" ></ion-icon>
+      </ion-item>
+      <ion-item-options side="end" *ngIf="!IsHistoicalOrder"  >
+        <button fill="solid" size="large"    color="danger"  (click)="deleteOrder(item)">
+          <ion-icon size="large"  name="trash"  color="danger"  slot="start" ></ion-icon>
+        </button>
+      </ion-item-options>
+    </ion-item-sliding>
+  <!-- </div> -->
+
+  </ion-list>
+</ion-content>
+  <app-camera-scanner></app-camera-scanner>
+</ion-content>

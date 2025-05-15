@@ -1,0 +1,28 @@
+.home-iMisaLogo{
+    // padding: 15vh 0 2vh;
+    text-align: center;
+}
+.iMisaHomeScreen{
+    --background: transparent;
+    background-image: url(/assets/img/iMisahome-Bg.jpg);
+    background-size: 100% 100%;
+}
+ion-button {
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 100%;
+    padding: 2px;
+}
+.home-iMisabuttons{
+  padding: 0 10px;
+}
+
+.btn-iMisaAction{
+    height:100px;
+}
+
+.pos-deviceid
+{
+    text-align: center;
+    margin-top: 50px;
+}

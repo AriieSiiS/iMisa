@@ -1,0 +1,7 @@
+{
+  "name": "iMisa",
+  "integrations": {
+    "cordova": {}
+  },
+  "type": "angular"
+}

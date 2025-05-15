@@ -1,0 +1,124 @@
+<ion-header>
+    <ion-toolbar color="dark" class="ion-color ion-color-dark md hydrated">
+      <!-- <ion-buttons slot="start">
+        <ion-back-button text="Back" icon="arrow-dropleft" [defaultHref]="defaultBackLink"></ion-back-button>
+     
+      </ion-buttons> -->
+
+      <ion-buttons slot="start">
+        <ion-back-button [defaultHref]="defaultBackLink"></ion-back-button>
+      </ion-buttons>
+      <!-- <ion-title slot="">Edit</ion-title> -->
+    </ion-toolbar>
+  </ion-header>
+  
+  <ion-content class="ion-padding" lines="full">
+    <!-- <ion-item   lines="full">
+      <ion-label position="floating">
+        <strong>Bezeichnung</strong>
+      </ion-label>
+      <label>{{artical.descinternal}}</label>
+    </ion-item> -->
+    
+    <ion-row>
+      <ion-col>
+        <label>
+          <strong>Bezeichnung:</strong>
+        </label>
+      </ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col>
+        <label>{{artical.descinternal}}</label>
+      </ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col>
+        <label>
+          <strong>Kategorie:</strong>
+        </label>
+      </ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col>
+        <label>{{artical.boundPCatagoryDescription}}</label>
+      </ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col>
+        <label>
+          <strong>Artikel Number:</strong>
+        </label>
+      </ion-col>
+      <ion-col>
+          <label>{{artical.boundPCatCode}}</label>
+        </ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col>
+        <label>
+          <strong>Suchcode:</strong>
+        </label>
+      </ion-col>
+      <ion-col>
+          <label>{{artical.searchcode}}</label>
+        </ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col>
+        <label>
+          <strong>Min. Menge:</strong>
+        </label>
+      </ion-col>
+      <ion-col>
+          <label>{{artical.minqty}}</label>
+        </ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col>
+        <label>
+          <strong>Max. Menge:</strong>
+        </label>
+      </ion-col>
+      <ion-col>
+          <label>{{artical.maxqty}}</label>
+        </ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col>
+        <label>
+          <strong>Faktor:</strong>
+        </label>
+      </ion-col>
+      <ion-col>
+          <label>{{artical.factorqty}}</label>
+        </ion-col>
+    </ion-row>
+    <ion-item   lines="full">
+      <ion-label position="floating">
+        <strong>Zusatzbez.:</strong>
+      </ion-label>
+      <ion-input [disabled]="IsHistoricalOrder==true" [(ngModel)]="additionalDescription"></ion-input>
+    </ion-item>
+    <ion-item   lines="full">
+      <ion-label position="floating">
+        <strong>Menge:</strong> 
+      </ion-label>
+      <ion-input [disabled]="IsHistoricalOrder==true" [(ngModel)]="orderQty" (ionChange)="validateQuantity($event)"> </ion-input>
+      
+    </ion-item> 
+    <ion-label *ngIf="errorMessage.length > 0">
+      <p style="color:red;">{{errorMessage}}</p>
+    </ion-label>
+    <ion-row *ngIf="IsHistoricalOrder==false">
+      <ion-col>
+          <ion-button color="primary" expand="block" (click)="saveOrder()">
+            <ion-icon  slot="start" name="cart"></ion-icon>
+            Submit
+          </ion-button>
+      </ion-col>
+    </ion-row>
+    
+    
+  </ion-content>
+  

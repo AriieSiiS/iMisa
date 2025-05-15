@@ -1,0 +1,33 @@
+<ion-header>
+ 
+  <ion-toolbar color="dark" class="ion-color ion-color-dark md hydrated">
+    <ion-buttons slot="secondary">
+      <ion-button fill="solid" routerLink="/home" routerDirection="root">
+        <ion-icon slot="start" color="primary" name="home"></ion-icon> Misa
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Settings</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+
+<ion-content>
+    <ion-item>
+        <ion-label>Account</ion-label>
+        <ion-select [(ngModel)]="defultOrderAccountNumber"  ok-text="Okay" (ionChange)="saveAccounts($event)" cancel-text="Cancel">
+          <ion-select-option *ngFor="let acc of arrAccounts"    [value]="acc.code">{{acc.description}}</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <ion-item>
+          <ion-label>Use Camara Scan</ion-label>
+          <ion-toggle [(ngModel)]="canScanUsingCamera" mode="ios" 
+          color="success" (ionChange)="SaveCameraScanSetting($event)" ></ion-toggle>
+        </ion-item>
+        <ion-item lines="full">
+          <ion-label position="floating">
+            <strong>User Initial</strong>
+          </ion-label>
+          <ion-input [(ngModel)]="userName" (ionChange)="saveUserInitial($event)"></ion-input>
+        </ion-item>
+</ion-content>
+
