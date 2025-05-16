@@ -1,31 +1,52 @@
 <ion-header>
- 
   <ion-toolbar color="dark" class="ion-color ion-color-dark md hydrated">
     <ion-buttons slot="secondary">
       <ion-button fill="solid" routerLink="/home" routerDirection="root">
         <ion-icon slot="start" color="primary" name="home"></ion-icon> Misa
       </ion-button>
     </ion-buttons>
-      <ion-buttons slot="start">
-        <ion-back-button [defaultHref]="defaultBackLink"></ion-back-button>
-      </ion-buttons>
-  <ion-title>Bestell History</ion-title>
-</ion-toolbar>
+    <!-- <ion-buttons slot="start">
+      <ion-back-button [defaultHref]="defaultBackLink"></ion-back-button>
+    </ion-buttons> -->
+    <ion-buttons slot="end">
+      <ion-button fill="solid" color="medium" (click)="clearOrderHistory()">
+      <ion-icon slot="start" name="trash"></ion-icon>
+      Löschen
+      </ion-button>
+    </ion-buttons>
+
+    <ion-title>History</ion-title>
+  </ion-toolbar>
 </ion-header>
 
-<ion-content >
-<ion-content >
-  <ion-list lines="full">
-      <ion-item *ngFor="let orderHistoryItem of arrOrderHistory; let i=index">
-      
-          <ion-icon slot="start" color="primary"  name="refresh-circle" (click)="AddToOrder(arrOrderHistory[i])"></ion-icon>       
-      
-        <ion-label>{{orderHistoryItem.dateadded}}</ion-label>
-        <ion-note  slot="end">{{orderHistoryItem.products}}</ion-note>
-        <ion-icon slot="end" color="primary"  name="arrow-dropright" (click)="editOrderHistory(arrOrderHistory[i])"></ion-icon>
+<ion-content>
+  <ion-content>
+    <ion-list lines="full">
+      <ion-item
+        *ngFor="let orderHistoryItem of arrOrderHistory; let i=index"
+        (click)="editOrderHistory(orderHistoryItem)"
+        button
+      >
+        <ion-icon
+          slot="start"
+          color="primary"
+          name="refresh-circle"
+          (click)="AddToOrder(orderHistoryItem); $event.stopPropagation()"
+          class="add-to-order-btn"
+        ></ion-icon>
+
+        <ion-label>
+          {{ orderHistoryItem.dateadded | date: 'dd.MM.yyyy HH:mm' }}
+        </ion-label>
+        <ion-note slot="end">
+          {{ orderHistoryItem.products[0]?.productDescription || '' }}
+          <span *ngIf="orderHistoryItem.products.length > 1">
+            +{{orderHistoryItem.products.length - 1}}
+          </span>
+        </ion-note>
+        <ion-icon slot="end" color="primary" name="chevron-forward"></ion-icon>
       </ion-item>
     </ion-list>
   </ion-content>
-    <!-- <app-camera-scanner></app-camera-scanner> -->
+  <!-- <app-camera-scanner></app-camera-scanner> -->
 </ion-content>
-

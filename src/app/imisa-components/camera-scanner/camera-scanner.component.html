@@ -1,7 +1,17 @@
 
-<ion-fab  *ngIf="this.commonService.canUseCameraScanning" 
+<video
+  *ngIf="isWeb"
+  id="video-preview"
+  width="600"
+  height="400"
+  style="border:1px solid #ccc; margin:10px auto; display:block;"
+  autoplay
+  muted
+></video>
+
+<ion-fab  *ngIf="commonService.canUseCameraScanning" 
 vertical="bottom"  horizontal="center" slot="fixed">  
   <ion-fab-button color="warning" (click)="scanBarcode()">  
     <ion-icon name="qr-scanner" color="dark"></ion-icon> 
   </ion-fab-button>  
-</ion-fab  > 
+</ion-fab> 

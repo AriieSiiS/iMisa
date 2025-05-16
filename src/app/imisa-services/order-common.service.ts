@@ -25,6 +25,7 @@ export class OrderCommonService {
     order.deliverydays = 0; // TODO : fetch is from  setting table
     order.fid = 0;
     order.objectId = "MisaOrder";
+    order.productDescription = artical.descinternal;
     await this.orderService.addOrder(order).then(() => {
       this.commonService.showMessage('Order saved successfully !');
     })
@@ -32,6 +33,7 @@ export class OrderCommonService {
 
   async addOrder(barcode) {
     let result=false;
+    console.log(barcode)
     if (this.commonService.CURRNET_BOUND_PCAT_CODE < 0) {
       await this.commonService.showAlertMessage('Please select artical before scanning item', 'iMisa');
     }

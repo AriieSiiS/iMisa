@@ -1,40 +1,26 @@
-import { Injectable } from '@angular/core';
-import { DataAccessServiceService } from '../data-access/data-access-service.service';
-import { BoundPcatCode } from '../models/bound-pcat-code';
-
+import { Injectable } from "@angular/core";
+import { BoundPcatCode } from "../models/bound-pcat-code";
+import { NativestorageService } from "./nativestorage.service";
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root",
 })
 export class BoundPcatService {
+  constructor(private nativestorageService: NativestorageService) {}
 
-  constructor(private dataAccessServiceService: DataAccessServiceService) { }
-  
-   async getArticals(){
-    let boundPcatCodes: BoundPcatCode[]=[];
-      await this.dataAccessServiceService.getArticals().then((r) => {
-     
-      if (r.rows.length > 0) {
+  async getArticals(): Promise<BoundPcatCode[]> {
+    const rawCats = await this.nativestorageService.getNativeValue(
+      "boundpcatcode"
+    );
+    if (!rawCats) return [];
 
-        for(var i=0;i<=r.rows.length-1;i++)
-        {
-          boundPcatCodes.push(this.populateBoundPcatCodeFromDBObject(r.rows.item(i)));
-        }
-        // r.rows.item.forEach(x => {
-        //   boundPcatCodes.push(this.populateBoundPcatCodeFromDBObject(x));
-        // });
-      }
-      
-    });
-    return boundPcatCodes;
-  }
+return rawCats.map((item: any) => {
+  const cat = new BoundPcatCode();
+  cat.boundPCatCode = item.BoundToCode; // <-- este es el ID real
+  cat.descinternal = item.BoundtoCodeDesc; // <-- este es el nombre
+  cat.sortOrder = item.Rank; // <-- este es el orden
+  return cat;
+});
 
-  populateBoundPcatCodeFromDBObject(dbObj: any): BoundPcatCode {
-    var boundPcatCode = new BoundPcatCode()
-      boundPcatCode.boundPCatCode = dbObj.boundPCatCode,
-      boundPcatCode.sortOrder = dbObj.sortOrder,
-      boundPcatCode.descinternal = dbObj.descinternal
-
-    return boundPcatCode;
   }
 }

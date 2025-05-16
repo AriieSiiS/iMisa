@@ -16,12 +16,12 @@ const routes: Routes = [
   }
   ,{
     path: 'order-history',
-    loadChildren: '../order/order.module#OrderPageModule'
+    loadChildren: () => import('../order/order.module').then(m => m.OrderPageModule)
 
   },
   {
     path: 'edit-order',
-    loadChildren: '../item-edit/item-edit.module#ItemEditPageModule'
+    loadChildren: () => import('../item-edit/item-edit.module').then(m => m.ItemEditPageModule)
   }
 
   

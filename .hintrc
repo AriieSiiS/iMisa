@@ -1,0 +1,16 @@
+{
+  "extends": [
+    "development"
+  ],
+  "hints": {
+    "compat-api/html": [
+      "default",
+      {
+        "ignore": [
+          "ion-input[inputmode]"
+        ]
+      }
+    ],
+    "no-inline-styles": "off"
+  }
+}

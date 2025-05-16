@@ -14,7 +14,7 @@ const routes: Routes = [
   ,
   {
     path: 'artical-list',
-    loadChildren: '../artical-list/artical-list.module#ArticalListPageModule'
+    loadChildren: () => import('../artical-list/artical-list.module').then(m => m.ArticalListPageModule)
   }
 ];
 

@@ -1,0 +1,32 @@
+[
+    {
+        "BoundToCode": 0,
+        "BoundtoCodeDesc": "Artikelstamm",
+        "Rank": 0
+    },
+    {
+        "BoundToCode": 105379,
+        "BoundtoCodeDesc": "Medikamente",
+        "Rank": 200
+    },
+    {
+        "BoundToCode": 105380,
+        "BoundtoCodeDesc": "Pflegematerial",
+        "Rank": 210
+    },
+    {
+        "BoundToCode": 105381,
+        "BoundtoCodeDesc": "Operationssaal",
+        "Rank": 220
+    },
+    {
+        "BoundToCode": 105382,
+        "BoundtoCodeDesc": "Küche",
+        "Rank": 230
+    },
+    {
+        "BoundToCode": 105383,
+        "BoundtoCodeDesc": "Büromaterial",
+        "Rank": 240
+    }
+]

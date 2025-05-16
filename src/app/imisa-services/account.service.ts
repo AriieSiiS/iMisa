@@ -1,37 +1,34 @@
-import { Injectable } from '@angular/core';
-import { Accounts } from '../models/accounts';
-import { DataAccessServiceService } from '../data-access/data-access-service.service';
+import { Injectable } from "@angular/core";
+import { Accounts } from "../models/accounts";
+import { NativestorageService } from "./nativestorage.service";
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root",
 })
 export class AccountService {
+  constructor(private nativestorageService: NativestorageService) {}
 
-  constructor(private dataAccessService:DataAccessServiceService)
-   { 
+  async getAccounts(): Promise<Accounts[]> {
+    const rawAccounts = await this.nativestorageService.getNativeValue(
+      "accounts"
+    );
+      console.log("[AccountService] rawAccounts from storage:", rawAccounts); // <-- LOG CRÍTICO
+    if (!rawAccounts) return [];
 
-   }
+return rawAccounts.map((item: any) => {
+  const account = new Accounts();
+  account.code = item.Code;
+  account.description = item.DescriptionShort; // <--- CORREGIDO
+  return account;
+});
 
- 
-
-  async getAccounts() {
-    let arrAccounts: Accounts[] = [];
-    await this.dataAccessService.getAccounts().then((r) => {
-      if (r.rows.length > 0) {
-        for(var i=0;i<=r.rows.length-1;i++)
-        {
-          arrAccounts.push(this.populateAccountsFromDBObject(r.rows.item(i)));
-        }
-      }
-    });
-    return arrAccounts;
   }
 
   populateAccountsFromDBObject(dbObj: any): Accounts {
-    var account = new Accounts()
+    var account = new Accounts();
     account.code = dbObj.code;
-    account.description  = dbObj.description;
-   
+    account.description = dbObj.description;
+
     return account;
   }
 }

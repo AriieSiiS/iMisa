@@ -1,17 +1,17 @@
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Routes, RouterModule } from '@angular/router';
+import { NgModule } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import { Routes, RouterModule } from "@angular/router";
 
-import { IonicModule } from '@ionic/angular';
+import { IonicModule } from "@ionic/angular";
 
-import { AppSettingsPage } from './app-settings.page';
+import { AppSettingsPage } from "./app-settings.page";
 
 const routes: Routes = [
   {
-    path: '',
-    component: AppSettingsPage
-  }
+    path: "",
+    component: AppSettingsPage,
+  },
 ];
 
 @NgModule({
@@ -19,8 +19,8 @@ const routes: Routes = [
     CommonModule,
     FormsModule,
     IonicModule,
-    RouterModule.forChild(routes)
+    RouterModule.forChild(routes),
   ],
-  declarations: [AppSettingsPage]
+  declarations: [AppSettingsPage],
 })
 export class AppSettingsPageModule {}

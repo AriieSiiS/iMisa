@@ -1,25 +1,47 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonService } from 'src/app/imisa-services/common.service';
-import { NativestorageService } from 'src/app/imisa-services/nativestorage.service';
+import { Component, OnInit } from "@angular/core";
+import { CommonService } from "../../imisa-services/common.service";
 
 @Component({
-  selector: 'app-app-settings',
-  templateUrl: './app-settings.page.html',
-  styleUrls: ['./app-settings.page.scss'],
+  selector: "app-app-settings",
+  templateUrl: "./app-settings.page.html",
+  styleUrls: ["./app-settings.page.scss"],
+  standalone: false,
 })
 export class AppSettingsPage implements OnInit {
   serverUrl: string;
-  constructor(private commonService: CommonService,
-    private nativeStorageService: NativestorageService) { }
+  restUser: string;
+  restPassword: string;
+  defaultBackLink = "/tabs/articals";
+  successMsg: string = "";
 
-  ngOnInit() {
-  }
+  constructor(private commonService: CommonService) {}
+
+  ngOnInit() {}
+
   async ionViewWillEnter() {
-    //debugger;
-    await this.commonService.getServerUrl().then(x => { this.serverUrl = x });
-
+    this.serverUrl = await this.commonService.getServerUrl();
+    this.restUser = await this.commonService.getRestUser();
+    this.restPassword = await this.commonService.getRestPassword();
   }
+
   async saveServerUrl(event) {
-    await this.nativeStorageService.setNativeValue(this.commonService.SERVER_URL, event.detail.value)
+    this.serverUrl = event.detail.value;
+    await this.commonService.setServerUrl(this.serverUrl);
+    this.successMsg = "Server-URL wurde erfolgreich gespeichert!";
+    setTimeout(() => (this.successMsg = ""), 2000);
+  }
+
+  async saveRestUser(event) {
+    this.restUser = event.detail.value;
+    await this.commonService.setRestUser(this.restUser);
+    this.successMsg = "REST-Server Benutzername wurde erfolgreich gespeichert!";
+    setTimeout(() => (this.successMsg = ""), 2000);
+  }
+
+  async saveRestPassword(event) {
+    this.restPassword = event.detail.value;
+    await this.commonService.setRestPassword(this.restPassword);
+    this.successMsg = "REST-Server Passwort wurde erfolgreich gespeichert!";
+    setTimeout(() => (this.successMsg = ""), 2000);
   }
 }

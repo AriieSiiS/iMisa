@@ -17,7 +17,7 @@ const routes: Routes = [
   // },
   ,{
     path: 'edit-order',
-    loadChildren: '../item-edit/item-edit.module#ItemEditPageModule'
+    loadChildren: () => import('../item-edit/item-edit.module').then(m => m.ItemEditPageModule)
   },
 ];
 

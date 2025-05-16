@@ -1,0 +1,22 @@
+<ion-header>
+  <ion-toolbar color="dark">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/orderhistory"></ion-back-button>
+    </ion-buttons>
+    <ion-title>
+      Bestellung vom {{ orderHistory.dateadded | date: 'dd.MM.yyyy HH:mm' }}
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-list>
+    <ion-item *ngFor="let product of products">
+      <ion-label>
+        <strong>{{ product.productDescription }}</strong><br />
+        Code: {{ product.code }}<br />
+        Menge: {{ product.amount }}
+      </ion-label>
+    </ion-item>
+  </ion-list>
+</ion-content>

@@ -1,0 +1,106 @@
+[
+  {
+    "Code": "0",
+    "DescGe": " Keine (z.B. Rechnungsnebenkosten)"
+  },
+  {
+    "Code": "108",
+    "DescGe": "Anlagen"
+  },
+  {
+    "Code": "109",
+    "DescGe": "Ausrüstung"
+  },
+  {
+    "Code": "113",
+    "DescGe": "Blutersatz"
+  },
+  {
+    "Code": "110",
+    "DescGe": "Büromaterial"
+  },
+  {
+    "Code": "120",
+    "DescGe": "Chemikalie, medizinisch verwendet"
+  },
+  {
+    "Code": "119",
+    "DescGe": "Desinfektionsmittel, medizinisch verwendet"
+  },
+  {
+    "Code": "121",
+    "DescGe": "Dialyseprodukte"
+  },
+  {
+    "Code": "111",
+    "DescGe": "EDV-Material"
+  },
+  {
+    "Code": "118",
+    "DescGe": "Einwegmaterial, medizinisch verwendet"
+  },
+  {
+    "Code": "123",
+    "DescGe": "Ernährung, Spezialdiätetika"
+  },
+  {
+    "Code": "101",
+    "DescGe": "Implantattionsmaterial"
+  },
+  {
+    "Code": "117",
+    "DescGe": "Infusionslösungen"
+  },
+  {
+    "Code": "122",
+    "DescGe": "Instrumente und Spritzen"
+  },
+  {
+    "Code": "105",
+    "DescGe": "Küchenmaterial"
+  },
+  {
+    "Code": "124",
+    "DescGe": "Labormaterial, Glaswaren"
+  },
+  {
+    "Code": "107",
+    "DescGe": "Lebensmittel"
+  },
+  {
+    "Code": "100",
+    "DescGe": "Medikament"
+  },
+  {
+    "Code": "103",
+    "DescGe": "Nahtmaterial"
+  },
+  {
+    "Code": "112",
+    "DescGe": "Osteosynthesematerial"
+  },
+  {
+    "Code": "102",
+    "DescGe": "Prothese"
+  },
+  {
+    "Code": "106",
+    "DescGe": "Reinigungsmittel"
+  },
+  {
+    "Code": "114",
+    "DescGe": "Spezialitäten, übrige"
+  },
+  {
+    "Code": "116",
+    "DescGe": "Textilien"
+  },
+  {
+    "Code": "104",
+    "DescGe": "Utensilien"
+  },
+  {
+    "Code": "115",
+    "DescGe": "Verbandmaterial"
+  }
+]
