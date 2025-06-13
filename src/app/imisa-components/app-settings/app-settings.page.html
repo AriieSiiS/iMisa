@@ -5,7 +5,7 @@
       <ion-back-button
         text="Zurück"
         slot="start"
-        icon="arrow-dropleft"
+        icon="arrow-back"
         [defaultHref]="defaultBackLink"
       ></ion-back-button>
     </ion-buttons>
@@ -14,10 +14,8 @@
 
 <ion-content>
   <ion-item lines="full">
-    <ion-label position="floating">
-      <strong>Server URL</strong>
-    </ion-label>
     <ion-input
+      label="Server URL"
       [(ngModel)]="serverUrl"
       (ionChange)="saveServerUrl($event)"
       placeholder="https://..."
@@ -25,22 +23,18 @@
   </ion-item>
 
   <ion-item lines="full">
-    <ion-label position="floating">
-      <strong>Server Username</strong>
-    </ion-label>
     <ion-input
+      label="Server Username"
       [(ngModel)]="restUser"
       (ionChange)="saveRestUser($event)"
     ></ion-input>
   </ion-item>
 
   <ion-item lines="full">
-    <ion-label position="floating">
-      <strong>Server Password</strong>
-    </ion-label>
     <ion-input
-      [(ngModel)]="restPassword"
+      label="Server Password"
       type="password"
+      [(ngModel)]="restPassword"
       (ionChange)="saveRestPassword($event)"
     ></ion-input>
   </ion-item>

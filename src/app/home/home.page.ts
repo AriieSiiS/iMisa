@@ -36,10 +36,26 @@ export class HomePage implements OnInit {
   }
 
   async ShowOrders() {
-    const res = await this.fileUpdatesService.PostOrerToServer("", [], "");
-    if (res) {
-      this.router.navigateByUrl("tabs");
+    const baseUrl = await this.commonService.getServerUrl();
+
+    if (!baseUrl) {
+      await this.commonService.showAlertMessage(
+        "Server-URL fehlt. Bitte geben Sie die Server-URL in den App-Einstellungen ein.",
+        "iMisa"
+      );
+      return false;
     }
+
+    const hasData = await this.nativeStorageService.hasAllDataSaved();
+
+    if (!hasData) {
+      await this.commonService.showAlertMessage(
+        "Keine lokalen Daten gefunden. Bitte zuerst einen Auftrag absenden, um die Daten zu laden.",
+        "iMisa"
+      );
+      return false;
+    }
+    this.router.navigateByUrl("tabs");
   }
 
   private mapOrdersToApiLines(orders: Order[]): any[] {
@@ -119,13 +135,14 @@ export class HomePage implements OnInit {
         );
       }
     } else {
-      await this.fileUpdatesService.fetchAndSaveAllFiles();
-      await this.commonService.showAlertMessage(
+      //await this.fileUpdatesService.fetchAndSaveAllFiles();
+      /*await this.commonService.showAlertMessage(
         "Kein Auftrag zum Übermitteln. Die Daten wurden aktualisiert.",
         "iMisa"
-      );
+      );*/
     }
   }
+
   openSettings() {
     this.router.navigateByUrl("app-settings");
   }

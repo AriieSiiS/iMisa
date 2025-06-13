@@ -25,27 +25,6 @@ export class FileUpdatesService {
     return `${baseUrl}/Getfiles/${deviceId}_Get${fileName}.axd`;
   }
 
-  async PostOrerToServer(): Promise<boolean> {
-    const baseUrl = await this.commonService.getServerUrl();
-
-    if (!baseUrl) {
-      await this.commonService.showAlertMessage(
-        "Server-URL fehlt. Bitte geben Sie die Server-URL in den App-Einstellungen ein.",
-        "iMisa"
-      );
-      return false;
-    }
-
-    const hasData = await this.nativeStorageService.hasAllDataSaved();
-    if (!hasData) {
-      await this.commonService.showAlertMessage(
-        "Keine lokalen Daten gefunden. Bitte zuerst einen Auftrag absenden, um die Daten zu laden.",
-        "iMisa"
-      );
-      return false;
-    }
-  }
-
   async fetchAndSaveAllFiles(showLoader = false): Promise<boolean> {
     if (showLoader) {
       await this.commonService.showLoader("Lade Daten vom Server...");
