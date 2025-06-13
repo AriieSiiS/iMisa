@@ -83,7 +83,7 @@ export class ArticalListPage implements OnInit {
       order.accountno = "250";
     }
     order.amount = artical.defaultqty;
-    order.deliverydays = 0; // TODO : fetch from settings table
+    order.deliverydays = 0;
     order.fid = 0;
     order.objectId = "MisaOrder";
     await this.orderService.addOrder(order).then(() => {

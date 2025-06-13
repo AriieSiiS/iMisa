@@ -8,19 +8,6 @@ export class NativestorageService {
   constructor(private nativeStorege: NativeStorage) {}
 
   async setNativeValue(key: string, value: any) {
-    // Log más descriptivo y menos verboso
-    if (Array.isArray(value)) {
-      console.log(
-        `[NativeStorage] 💾 SET '${key}': Guardando Array de ${value.length} elementos.`
-      );
-    } else if (value && typeof value === "object") {
-      console.log(`[NativeStorage] 💾 SET '${key}': Guardando Objeto.`);
-    } else {
-      console.log(
-        `[NativeStorage] 💾 SET '${key}': Guardando valor simple:`,
-        value
-      );
-    }
     await this.nativeStorege.setItem(key, value);
   }
 
@@ -28,24 +15,8 @@ export class NativestorageService {
     let nativeValue;
     try {
       nativeValue = await this.nativeStorege.getItem(key);
-      // Log más descriptivo y menos verboso
-      if (Array.isArray(nativeValue)) {
-        console.log(
-          `[NativeStorage] 📖 GET '${key}': Leído Array de ${nativeValue.length} elementos.`
-        );
-      } else if (nativeValue && typeof nativeValue === "object") {
-        console.log(`[NativeStorage] 📖 GET '${key}': Leído Objeto.`);
-      } else {
-        console.log(
-          `[NativeStorage] 📖 GET '${key}': Leído valor simple:`,
-          nativeValue
-        );
-      }
     } catch (err) {
       if (err && err.code === 2) {
-        console.log(
-          `[NativeStorage] ❔ GET '${key}': No encontrado (es normal si es la primera vez).`
-        );
         return null;
       }
       throw err;
@@ -54,9 +25,6 @@ export class NativestorageService {
   }
 
   async hasAllDataSaved(): Promise<boolean> {
-    console.log(
-      "[NativeStorage] 🧐 Verificando si todos los datos están guardados..."
-    );
     const keys = [
       "products",
       "boundpcatcode",
@@ -72,7 +40,7 @@ export class NativestorageService {
       if (!data) {
         isValid = false;
       } else if (Array.isArray(data) && data.length === 0) {
-        // Permitimos que 'accounts' sea un array vacío por ahora para depurar
+        // Allow 'accounts' to be an empty array for now for debugging
         if (key !== "accounts") {
           isValid = false;
         }
@@ -85,16 +53,9 @@ export class NativestorageService {
       }
 
       if (!isValid) {
-        console.log(
-          `[NativeStorage] ❌ CHECK FALLIDO para la clave '${key}'. Los datos faltan o están vacíos.`
-        );
         return false;
       }
     }
-
-    console.log(
-      "[NativeStorage] ✅ CHECK OK: Todos los datos necesarios están presentes."
-    );
     return true;
   }
 }

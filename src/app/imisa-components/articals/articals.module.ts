@@ -1,31 +1,33 @@
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Routes, RouterModule } from '@angular/router';
-import { IonicModule } from '@ionic/angular';
-import { ArticalsPage } from './articals.page';
-import {ComponentsModule} from '../components.modules'
+import { NgModule } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import { Routes, RouterModule } from "@angular/router";
+import { IonicModule } from "@ionic/angular";
+import { ArticalsPage } from "./articals.page";
+import { ComponentsModule } from "../components.modules";
 
 const routes: Routes = [
   {
-    path: '',
-    component: ArticalsPage
-  }
-  ,
+    path: "",
+    component: ArticalsPage,
+  },
   {
-    path: 'artical-list',
-    loadChildren: () => import('../artical-list/artical-list.module').then(m => m.ArticalListPageModule)
-  }
+    path: "artical-list",
+    loadChildren: () =>
+      import("../artical-list/artical-list.module").then(
+        (m) => m.ArticalListPageModule
+      ),
+  },
 ];
 
-@NgModule({ 
+@NgModule({
   imports: [
     CommonModule,
     FormsModule,
     IonicModule,
     ComponentsModule,
-    RouterModule.forChild(routes)
+    RouterModule.forChild(routes),
   ],
-  declarations: [ArticalsPage]
+  declarations: [ArticalsPage],
 })
 export class ArticalsPageModule {}

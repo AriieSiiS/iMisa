@@ -43,18 +43,4 @@ export class ProductService {
     const found = products.find((p) => Number(p.code) === Number(productCode));
     return found ?? null;
   }
-
-  populateProductTypeFromDBObject(dbObj: any): Product {
-    var prd = new Product();
-    prd.boundPCatCode = dbObj.boundPCatCode;
-    prd.code = dbObj.code;
-    prd.defaultqty = dbObj.defaultqty;
-    prd.descinternal = dbObj.descinternal;
-    prd.factorqty = dbObj.factorqty;
-    prd.maxqty = dbObj.maxqty;
-    prd.minqty = dbObj.minqty;
-    prd.mawiMatControl = dbObj.mawiMatControl;
-    prd.mawiMatGroup = dbObj.mawiMatGroup;
-    return prd;
-  }
 }

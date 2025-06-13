@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
 import { BarcodeScanner } from "@awesome-cordova-plugins/barcode-scanner/ngx";
 import { CommonService } from "../../imisa-services/common.service";
-import { Router, ActivatedRoute } from "@angular/router";
+import { Router } from "@angular/router";
 import { OrderCommonService } from "../../imisa-services/order-common.service";
 import { Platform } from "@ionic/angular";
 import { BrowserMultiFormatReader } from "@zxing/browser";
@@ -21,7 +21,6 @@ export class CameraScannerComponent implements OnInit, OnDestroy {
     private orderCommonService: OrderCommonService,
     public commonService: CommonService,
     private router: Router,
-    private activatedRoute: ActivatedRoute,
     private platform: Platform
   ) {
     this.isWeb = !this.platform.is("cordova");
@@ -35,64 +34,25 @@ export class CameraScannerComponent implements OnInit, OnDestroy {
 
   async scanBarcode() {
     if (this.commonService.canUseCameraScanning) {
-      console.log("isWeb:", this.isWeb);
-      if (this.isWeb) {
-        this.scanBarcodeWeb();
-      } else {
+      if (!this.isWeb) {
         this.barcodeScanner
           .scan()
           .then(async (res) => {
             this.addOrder(res.text);
           })
           .catch((err) => {
-            //this.commonService.showErrorMessage("Error escaneando: " + err);
+            //this.commonService.showErrorMessage("Error " + err);
           });
+      } else {
+        this.commonService.showErrorMessage(
+          "The camera scanning feature is not available on this device."
+        );
       }
     } else {
       this.commonService.showErrorMessage(
         "The camera scanning feature is not available on this device."
       );
     }
-  }
-
-  scanBarcodeWeb() {
-    if (!this.codeReader) {
-      this.codeReader = new BrowserMultiFormatReader();
-    }
-
-    this.codeReader.decodeFromVideoDevice(
-      null,
-      "video-preview",
-      async (result: any, error: any, controls: any) => {
-        //console.log("[ZXing Callback] result:", result);
-        //console.log("[ZXing Callback] error:", error);
-
-        if (result) {
-          controls.stop();
-          this.codeReader = null;
-
-          // Log del código leído
-          console.log("[ZXing Callback] Código detectado:", result.getText());
-
-          // Mostrar toast de éxito
-          this.commonService.showMessage(
-            "Success! Code scanned: " + result.getText()
-          );
-
-          await this.addOrder(result.getText());
-        }
-
-        // Opcional: solo muestra errores importantes, ignora "no se encontró"
-        if (
-          error &&
-          error.message &&
-          !error.message.includes("No barcode found")
-        ) {
-          //console.error("[ZXing Callback] Error importante:", error);
-          // this.commonService.showErrorMessage("Error escaneando: " + error);
-        }
-      }
-    );
   }
 
   async addOrder(barcode) {

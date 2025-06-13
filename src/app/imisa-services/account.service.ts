@@ -12,16 +12,15 @@ export class AccountService {
     const rawAccounts = await this.nativestorageService.getNativeValue(
       "accounts"
     );
-      console.log("[AccountService] rawAccounts from storage:", rawAccounts); // <-- LOG CRÍTICO
+
     if (!rawAccounts) return [];
 
-return rawAccounts.map((item: any) => {
-  const account = new Accounts();
-  account.code = item.Code;
-  account.description = item.DescriptionShort; // <--- CORREGIDO
-  return account;
-});
-
+    return rawAccounts.map((item: any) => {
+      const account = new Accounts();
+      account.code = item.Code;
+      account.description = item.DescriptionShort;
+      return account;
+    });
   }
 
   populateAccountsFromDBObject(dbObj: any): Accounts {

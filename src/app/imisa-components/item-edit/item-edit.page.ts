@@ -30,8 +30,7 @@ export class ItemEditPage implements OnInit {
     private router: Router
   ) {}
 
-  ngOnInit() {
-  }
+  ngOnInit() {}
 
   ionViewWillEnter() {
     this.commonService.currentPresentedPage = "artilcals";
@@ -40,18 +39,9 @@ export class ItemEditPage implements OnInit {
 
   getArticaDetailsFromRoute() {
     this.activatedRoute.queryParams.subscribe((x) => {
-      console.log("[ItemEditPage] Parámetros query:", x);
       const code = Number(x["code"]);
       const boundPCatCode = Number(x["boundPCatCode"]);
       const boundPCatagoryDescription = x["boundPCatagoryDescription"];
-      console.log(
-        "[ItemEditPage] code:",
-        code,
-        "boundPCatCode:",
-        boundPCatCode,
-        "boundPCatagoryDescription:",
-        boundPCatagoryDescription
-      );
       try {
         this.IsEditOrder = Boolean(JSON.parse(x.IsEditOrder));
       } catch {
@@ -62,14 +52,7 @@ export class ItemEditPage implements OnInit {
         this.productService
           .getProducts(boundPCatCode)
           .then((products: Product[]) => {
-            console.log(
-              "[ItemEditPage] Productos obtenidos para boundPCatCode",
-              boundPCatCode,
-              ":",
-              products
-            );
             this.artical = products.find((p: Product) => p.code === code);
-            console.log("[ItemEditPage] Producto encontrado:", this.artical);
             if (!this.artical) {
               this.commonService.showAlertMessage(
                 "Produkt nicht gefunden",
@@ -110,14 +93,14 @@ export class ItemEditPage implements OnInit {
     ) {
       if (this.IsEditOrder === false) {
         let order = new Order();
-        order.boundPCatCode = this.artical.boundPCatCode; 
-        order.productDescription = this.artical.descinternal; 
+        order.boundPCatCode = this.artical.boundPCatCode;
+        order.productDescription = this.artical.descinternal;
         order.code = this.artical.code;
         let orderAccountNo = await this.commonService.getOrderAccountNumber();
         order.accountno = orderAccountNo ? orderAccountNo.toString() : "250";
         order.additionaldesc = this.additionalDescription;
         order.amount = this.orderQty;
-        order.deliverydays = 0; // TODO: ajustar si procede
+        order.deliverydays = 0;
         order.fid = 0;
         order.objectId = "MisaOrder";
         await this.orderService.addOrder(order).then(() => {
@@ -125,7 +108,6 @@ export class ItemEditPage implements OnInit {
           this.router.navigate(["tabs/articals/artical-list"]);
         });
       } else {
-        // Editar pedido existente
         this.order.amount = this.orderQty;
         this.order.additionaldesc = this.additionalDescription;
         await this.orderService.updateOrder(this.order).then(() => {

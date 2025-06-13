@@ -26,13 +26,8 @@ export class HomePage implements OnInit {
   ) {}
 
   async ngOnInit(): Promise<void> {
-    console.log("HomePage: ngOnInit iniciado.");
     this._uniqueDeviceId = await this.commonService.getDeviceId();
     this.commonService.uniqueDeviceId = this._uniqueDeviceId;
-    console.log(
-      "HomePage: DeviceId disponible DESPUÉS de esperar:",
-      this._uniqueDeviceId
-    );
   }
 
   async setDeviceId() {
@@ -40,15 +35,7 @@ export class HomePage implements OnInit {
     this.commonService.uniqueDeviceId = this._uniqueDeviceId;
   }
 
-  async UpdateDefaultNativeSettings() {
-    // Esta lógica ya se maneja en la inicialización de CommonService,
-    // por lo que este método probablemente ya no sea necesario aquí.
-    // Si se mantiene, debería llamar a un método en CommonService.
-  }
-
   async ShowOrders() {
-    // El 'res' de PostOrerToServer es un booleano, no está claro qué se quiere hacer aquí.
-    // Lo mantengo, pero esta lógica podría necesitar revisión.
     const res = await this.fileUpdatesService.PostOrerToServer("", [], "");
     if (res) {
       this.router.navigateByUrl("tabs");
@@ -65,23 +52,10 @@ export class HomePage implements OnInit {
   }
 
   async submitOrder() {
-    console.log(
-      "🔹 [HomePage|submitOrder] -> Iniciando proceso de envío de orden."
-    );
-
     const hasData = await this.nativeStorageService.hasAllDataSaved();
-    console.log(
-      `🔹 [HomePage|submitOrder] -> ¿Datos locales completos?: ${hasData}`
-    );
 
     if (!hasData) {
-      console.log(
-        "🔹 [HomePage|submitOrder] -> Faltan datos locales. Iniciando descarga inicial..."
-      );
       const dataOk = await this.fileUpdatesService.fetchAndSaveAllFiles(true);
-      console.log(
-        `🔹 [HomePage|submitOrder] -> ¿Descarga inicial exitosa?: ${dataOk}`
-      );
 
       if (dataOk) {
         await this.commonService.showAlertMessage(
@@ -102,15 +76,11 @@ export class HomePage implements OnInit {
       userName = await this.nativeStorageService.getNativeValue(
         this.commonService.USER_INITIAL
       );
-      console.log(`🔹 [HomePage|submitOrder] -> Usuario obtenido: ${userName}`);
     } catch (error) {
       userName = "";
     }
 
     if (!userName || userName.length <= 0) {
-      console.log(
-        "🔹 [HomePage|submitOrder] -> ❌ ERROR: Falta el nombre de usuario."
-      );
       await this.commonService.showAlertMessage(
         "Bitte geben Sie die Initialen des Benutzers in den App-Einstellungen ein.",
         "iMisa"
@@ -119,19 +89,11 @@ export class HomePage implements OnInit {
     }
 
     const orders: Order[] = await this.orderService.getOrder();
-    console.log(
-      `🔹 [HomePage|submitOrder] -> Se encontraron ${orders.length} órdenes para enviar.`
-    );
 
     if (orders.length > 0) {
       const boundPcatCode = orders[0]?.boundPCatCode?.toString() ?? "0";
       const accountNumber = orders[0]?.accountno?.toString() ?? "0";
       const orderLines = this.mapOrdersToApiLines(orders);
-
-      console.log(
-        `🔹 [HomePage|submitOrder] -> Preparando para llamar a postOrderToApi con:`,
-        { boundPcatCode, accountNumber, userName, numLines: orderLines.length }
-      );
 
       try {
         await this.dataAccessServiceService.postOrderToApi(
@@ -140,37 +102,23 @@ export class HomePage implements OnInit {
           userName,
           orderLines
         );
-        console.log(
-          "🔹 [HomePage|submitOrder] -> ✅ ÉXITO: postOrderToApi completado."
-        );
 
         await this.orderService.saveOrderToHistory(orders, userName);
         await this.orderService.clearAll();
 
-        console.log(
-          "🔹 [HomePage|submitOrder] -> Actualizando datos después del envío..."
-        );
         await this.fileUpdatesService.fetchAndSaveAllFiles();
-        console.log("🔹 [HomePage|submitOrder] -> Datos actualizados.");
 
         await this.commonService.showAlertMessage(
           "Der Auftrag wurde erfolgreich übermittelt, im Verlauf gespeichert und die Daten wurden aktualisiert.",
           "iMisa"
         );
       } catch (error) {
-        console.error(
-          "🔹 [HomePage|submitOrder] -> ❌ ERROR al enviar la orden:",
-          error
-        );
         await this.commonService.showAlertMessage(
           "Fehler beim Senden des Auftrags: " + (error?.message || error),
           "iMisa"
         );
       }
     } else {
-      console.log(
-        "🔹 [HomePage|submitOrder] -> No hay órdenes para enviar. Solo se actualizarán los datos."
-      );
       await this.fileUpdatesService.fetchAndSaveAllFiles();
       await this.commonService.showAlertMessage(
         "Kein Auftrag zum Übermitteln. Die Daten wurden aktualisiert.",

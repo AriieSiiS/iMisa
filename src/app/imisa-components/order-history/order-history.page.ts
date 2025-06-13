@@ -68,7 +68,6 @@ export class OrderHistoryPage implements OnInit {
   }
 
   async AddToOrder(orderHistoryItem: OrderHistory) {
-    // Aquí tienes ya los productos del pedido histórico:
     const arrOrderHistory: Order[] = orderHistoryItem.products;
 
     if (arrOrderHistory && arrOrderHistory.length > 0) {

@@ -14,13 +14,12 @@ export class BoundPcatService {
     );
     if (!rawCats) return [];
 
-return rawCats.map((item: any) => {
-  const cat = new BoundPcatCode();
-  cat.boundPCatCode = item.BoundToCode; // <-- este es el ID real
-  cat.descinternal = item.BoundtoCodeDesc; // <-- este es el nombre
-  cat.sortOrder = item.Rank; // <-- este es el orden
-  return cat;
-});
-
+    return rawCats.map((item: any) => {
+      const cat = new BoundPcatCode();
+      cat.boundPCatCode = item.BoundToCode;
+      cat.descinternal = item.BoundtoCodeDesc;
+      cat.sortOrder = item.Rank;
+      return cat;
+    });
   }
 }

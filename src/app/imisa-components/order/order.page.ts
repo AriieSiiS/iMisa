@@ -42,18 +42,13 @@ export class OrderPage {
       if (cat) {
         boundPCatDesc = cat.descinternal;
       }
-    } catch (error) {
-      console.error(
-        "No se pudo obtener la descripción de la categoría:",
-        error
-      );
-    }
+    } catch (error) {}
 
     let navExtras: NavigationExtras = {
       queryParams: {
         code: order.code,
         boundPCatCode: order.boundPCatCode,
-        boundPCatagoryDescription: boundPCatDesc, // <-- ¡LA LÍNEA AÑADIDA!
+        boundPCatagoryDescription: boundPCatDesc,
         OrderItem: JSON.stringify(order),
         IsEditOrder: true,
         IsHistoricalOrder: this.IsHistoicalOrder,
