@@ -38,6 +38,40 @@ const routes: Routes = [
         (m) => m.AppSettingsPageModule
       ),
   },
+  {
+    path: "inventory-transfer",
+    loadChildren: () =>
+      import(
+        "./imisa-components/inventory-transfer/inventory-transfer.module"
+      ).then((m) => m.InventoryTransferPageModule),
+  },
+  {
+    path: "inventory",
+    loadChildren: () =>
+      import("./imisa-components/inventory/inventory.module").then(
+        (m) => m.InventoryPageModule
+      ),
+  },
+  {
+    path: "warenausgang",
+    loadChildren: () =>
+      import("./imisa-components/warenausgang/warenausgang.module").then(
+        (m) => m.WarenausgangPageModule
+      ),
+  },  {
+    path: 'inventory-transfer',
+    loadChildren: () => import('./imisa-components/inventory-transfer/inventory-transfer.module').then( m => m.InventoryTransferPageModule)
+  },
+  {
+    path: 'inventory',
+    loadChildren: () => import('./imisa-components/inventory/inventory.module').then( m => m.InventoryPageModule)
+  },
+  {
+    path: 'warenausgang',
+    loadChildren: () => import('./imisa-components/warenausgang/warenausgang.module').then( m => m.WarenausgangPageModule)
+  },
+
+
   // { path: 'articals-list-edit', loadChildren: './imisa-components/articals-list/articals-list.module#ArticalsListPageModule' },
 ];
 @NgModule({

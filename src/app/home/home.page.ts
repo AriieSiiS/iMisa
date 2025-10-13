@@ -146,4 +146,12 @@ export class HomePage implements OnInit {
   openSettings() {
     this.router.navigateByUrl("app-settings");
   }
+
+  openInventory() {
+    this.router.navigateByUrl("inventory");
+  }
+
+  openOutgoingOrder() {
+    this.router.navigateByUrl("warenausgang");
+  }
 }

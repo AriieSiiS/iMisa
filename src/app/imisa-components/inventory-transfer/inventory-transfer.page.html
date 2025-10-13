@@ -1,0 +1,30 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Inventur – Get/Send</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <ion-list inset="true">
+    <ion-item>
+      <ion-label>Inventur holen (GET)</ion-label>
+      <ion-button slot="end" fill="solid" color="primary" [disabled]="true"
+        >Demnächst</ion-button
+      >
+    </ion-item>
+    <ion-item>
+      <ion-label>Inventur senden (SEND)</ion-label>
+      <ion-button slot="end" fill="solid" color="primary" [disabled]="true"
+        >Demnächst</ion-button
+      >
+    </ion-item>
+  </ion-list>
+
+  <ion-note class="ion-text-center">
+    Skeleton creado. La lógica de GET/SEND se añadirá en la implementación
+    correspondiente.
+  </ion-note>
+</ion-content>

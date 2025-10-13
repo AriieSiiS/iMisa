@@ -14,7 +14,7 @@ export class AppComponent {
     private platform: Platform,
     private splashScreen: SplashScreen,
     private statusBar: StatusBar,
-    private commonService: CommonService // Inyecta CommonService
+    private commonService: CommonService
   ) {
     this.initializeApp();
   }
