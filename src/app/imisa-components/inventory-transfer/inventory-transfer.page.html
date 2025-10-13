@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/home"></ion-back-button>
     </ion-buttons>
-    <ion-title>Inventur – Get/Send</ion-title>
+    <ion-title>Inventur – Get/Send (Testmodus)</ion-title>
   </ion-toolbar>
 </ion-header>
 
@@ -11,20 +11,25 @@
   <ion-list inset="true">
     <ion-item>
       <ion-label>Inventur holen (GET)</ion-label>
-      <ion-button slot="end" fill="solid" color="primary" [disabled]="true"
-        >Demnächst</ion-button
-      >
+      <ion-button slot="end" fill="solid" color="primary" (click)="doGetMock()">
+        Laden
+      </ion-button>
     </ion-item>
+
     <ion-item>
       <ion-label>Inventur senden (SEND)</ion-label>
-      <ion-button slot="end" fill="solid" color="primary" [disabled]="true"
-        >Demnächst</ion-button
+      <ion-button
+        slot="end"
+        fill="solid"
+        color="primary"
+        (click)="doSendMock()"
       >
+        Senden
+      </ion-button>
     </ion-item>
   </ion-list>
 
   <ion-note class="ion-text-center">
-    Skeleton creado. La lógica de GET/SEND se añadirá en la implementación
-    correspondiente.
+    Testmodus: lädt/löscht lokale Inventurdaten (ohne Server).
   </ion-note>
 </ion-content>

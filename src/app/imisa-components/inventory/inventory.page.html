@@ -10,20 +10,33 @@
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
+
+  <ion-toolbar *ngIf="header">
+    <ion-title size="small">
+      Lagerort: {{header?.StorageUnitID}} – {{header?.StorageUnitIDDesc}} |
+      Bewegung: {{header?.MawiMoveID}}
+    </ion-title>
+  </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding">
-  <ion-item>
-    <ion-label>Nur unbestätigte</ion-label>
-    <ion-toggle disabled="true"></ion-toggle>
-  </ion-item>
-
-  <ion-list>
-    <ion-item>
+  <ion-list *ngIf="items?.length > 0; else noData">
+    <ion-item *ngFor="let it of items">
       <ion-label>
-        <h2>Artikel-Liste</h2>
-        <p>La lista y detalle se implementarán en el siguiente paso.</p>
+        <h2>{{it.Code}} — {{it.DescInternalGe}}</h2>
+        <p>
+          Erwartet: {{it.QtyExpected}} &nbsp;|&nbsp; Real: {{it.QtyReal ?? '—'}}
+        </p>
+        <p *ngIf="it.StoragePlaceIDDesc">
+          Lager: {{it.StoragePlaceID}} – {{it.StoragePlaceIDDesc}}
+        </p>
       </ion-label>
     </ion-item>
   </ion-list>
+
+  <ng-template #noData>
+    <ion-item lines="none">
+      <ion-label>Keine Inventurdaten vorhanden.</ion-label>
+    </ion-item>
+  </ng-template>
 </ion-content>
