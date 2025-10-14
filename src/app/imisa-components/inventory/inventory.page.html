@@ -5,6 +5,9 @@
     </ion-buttons>
     <ion-title>Inventur</ion-title>
     <ion-buttons slot="end">
+      <ion-button (click)="scanAndOpen()" aria-label="Scan Artikel">
+        <ion-icon name="camera-outline"></ion-icon>
+      </ion-button>
       <ion-button (click)="doGetMock()" aria-label="Get Inventur">
         <ion-icon name="cloud-download-outline"></ion-icon>
       </ion-button>

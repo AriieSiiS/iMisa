@@ -2,6 +2,7 @@ import { Component } from "@angular/core";
 import { NativestorageService } from "../../imisa-services/nativestorage.service";
 import { CommonService } from "../../imisa-services/common.service";
 import { InventoryHeader, InventoryItem } from "../../models/inventory";
+import { BarcodeScanner } from "@awesome-cordova-plugins/barcode-scanner/ngx";
 
 @Component({
   selector: "app-inventory",
@@ -26,7 +27,8 @@ export class InventoryPage {
 
   constructor(
     private native: NativestorageService,
-    private common: CommonService
+    private common: CommonService,
+    private barcodeScanner: BarcodeScanner
   ) {}
 
   async ionViewWillEnter() {
@@ -300,5 +302,68 @@ export class InventoryPage {
       }
     }
     return false;
+  }
+
+  async scanAndOpen() {
+    try {
+      const result = await this.barcodeScanner.scan({
+        showFlipCameraButton: true,
+        showTorchButton: true,
+        prompt: "Artikel-Barcode scannen",
+        resultDisplayDuration: 0,
+      });
+
+      if (result?.cancelled) return;
+
+      const text = (result?.text || "").trim();
+      if (!text) {
+        await this.common.showAlertMessage("Kein Code erkannt.", "iMisa");
+        return;
+      }
+
+      // Normalizar: probar numérico (Code) o alfanumérico (SearchCode)
+      const asNumber = Number(text);
+      let foundIndexGlobal = -1;
+
+      if (!isNaN(asNumber)) {
+        // Buscar por Code exacto
+        foundIndexGlobal = this.allItems.findIndex(
+          (x) => Number(x.Code) === asNumber
+        );
+      }
+
+      if (foundIndexGlobal === -1) {
+        // Buscar por SearchCode (case-insensitive, recorta espacios)
+        const norm = text.toUpperCase();
+        foundIndexGlobal = this.allItems.findIndex(
+          (x) => (x.SearchCode || "").toUpperCase().trim() === norm
+        );
+      }
+
+      if (foundIndexGlobal === -1) {
+        await this.common.showAlertMessage("Artikel nicht gefunden.", "iMisa");
+        return;
+      }
+
+      // Asegurar que el artículo esté visible según filtro y seleccionarlo
+      this.applyFilter();
+      let idxVisible = this.items.indexOf(this.allItems[foundIndexGlobal]);
+
+      if (idxVisible === -1) {
+        // Está filtrado; muestra todos o solo no confirmados según corresponda
+        // Si el item está confirmado y tenemos filtro de "solo no confirmados", desactívalo para poder verlo
+        this.showOnlyUnconfirmed = false;
+        this.applyFilter();
+        idxVisible = this.items.indexOf(this.allItems[foundIndexGlobal]);
+      }
+
+      if (idxVisible !== -1) {
+        this.selectItem(idxVisible);
+      } else {
+        await this.common.showAlertMessage("Artikel nicht sichtbar.", "iMisa");
+      }
+    } catch (err) {
+      await this.common.showErrorMessage("Scan fehlgeschlagen.");
+    }
   }
 }

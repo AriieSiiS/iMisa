@@ -39,6 +39,23 @@
     ></ion-input>
   </ion-item>
 
+  <ion-item lines="full">
+    <ion-label position="stacked">Entnahmelagerort (Device)</ion-label>
+    <ion-input
+      type="number"
+      inputmode="numeric"
+      [value]="warehouseLocation"
+      (ionChange)="saveWarehouseLocation($event)"
+      placeholder="z. B. 6"
+    >
+    </ion-input>
+  </ion-item>
+
+  <!-- (Opcional) feedback reutilizando successMsg que ya usas -->
+  <ion-text color="success" *ngIf="successMsg">
+    <p class="ion-text-right ion-padding-end">{{ successMsg }}</p>
+  </ion-text>
+
   <ion-text color="success" *ngIf="successMsg" class="ion-padding">
     {{ successMsg }}
   </ion-text>
