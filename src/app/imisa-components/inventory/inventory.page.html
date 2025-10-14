@@ -5,8 +5,11 @@
     </ion-buttons>
     <ion-title>Inventur</ion-title>
     <ion-buttons slot="end">
-      <ion-button disabled="true">
-        <ion-icon name="camera-outline"></ion-icon>
+      <ion-button (click)="doGetMock()" aria-label="Get Inventur">
+        <ion-icon name="cloud-download-outline"></ion-icon>
+      </ion-button>
+      <ion-button (click)="doSendMock()" aria-label="Send Inventur">
+        <ion-icon name="paper-plane-outline"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
@@ -17,11 +20,28 @@
       Bewegung: {{header?.MawiMoveID}}
     </ion-title>
   </ion-toolbar>
+
+  <ion-toolbar>
+    <ion-item lines="none">
+      <ion-label>Nur unbestätigte</ion-label>
+      <ion-toggle
+        [(ngModel)]="showOnlyUnconfirmed"
+        (ionChange)="onToggleOnlyUnconfirmedChanged()"
+      ></ion-toggle>
+    </ion-item>
+  </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding">
   <ion-list *ngIf="items?.length > 0; else noData">
-    <ion-item *ngFor="let it of items">
+    <ion-item
+      button
+      detail="false"
+      *ngFor="let it of items; let i = index"
+      (click)="selectItem(i)"
+      [class.confirmed]="it.QtyReal !== null && it.QtyReal !== undefined"
+      [color]="selectedIndex === i ? 'light' : undefined"
+    >
       <ion-label>
         <h2>{{it.Code}} — {{it.DescInternalGe}}</h2>
         <p>
@@ -31,12 +51,65 @@
           Lager: {{it.StoragePlaceID}} – {{it.StoragePlaceIDDesc}}
         </p>
       </ion-label>
+      <ion-icon
+        slot="end"
+        *ngIf="it.QtyReal !== null && it.QtyReal !== undefined"
+        name="checkmark-circle-outline"
+      ></ion-icon>
     </ion-item>
   </ion-list>
+
+  <!-- Panel de detalle -->
+  <ion-card *ngIf="selectedIndex !== null && items[selectedIndex] as sel">
+    <ion-card-header>
+      <ion-card-title>Artikel</ion-card-title>
+      <ion-card-subtitle
+        >{{sel.Code}} — {{sel.DescInternalGe}}</ion-card-subtitle
+      >
+    </ion-card-header>
+    <ion-card-content>
+      <ion-item lines="full">
+        <ion-label position="stacked">Erwartet</ion-label>
+        <ion-input [value]="sel.QtyExpected" readonly></ion-input>
+      </ion-item>
+
+      <ion-item lines="full">
+        <ion-label position="stacked">Real (QtyReal)</ion-label>
+        <ion-input
+          type="number"
+          inputmode="decimal"
+          [(ngModel)]="qtyRealInput"
+          placeholder="Menge eingeben"
+        ></ion-input>
+      </ion-item>
+
+      <ion-item lines="none">
+        <ion-label position="stacked">Lager</ion-label>
+        <ion-input
+          [value]="sel.StoragePlaceID + (sel.StoragePlaceIDDesc ? ' – ' + sel.StoragePlaceIDDesc : '')"
+          readonly
+        ></ion-input>
+      </ion-item>
+
+      <div class="ion-text-right ion-margin-top">
+        <ion-button color="primary" (click)="saveQtyReal()"
+          >Speichern</ion-button
+        >
+        <ion-button fill="outline" (click)="gotoNext()"
+          >Nächster Artikel</ion-button
+        >
+      </div>
+    </ion-card-content>
+  </ion-card>
 
   <ng-template #noData>
     <ion-item lines="none">
       <ion-label>Keine Inventurdaten vorhanden.</ion-label>
     </ion-item>
+    <div class="ion-text-center ion-padding">
+      <ion-button color="primary" (click)="doGetMock()">
+        Inventur holen (GET)
+      </ion-button>
+    </div>
   </ng-template>
 </ion-content>
