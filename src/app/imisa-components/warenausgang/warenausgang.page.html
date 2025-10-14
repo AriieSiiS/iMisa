@@ -13,7 +13,8 @@
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
-  <!-- NUEVO: mostrar Lagerort por defecto -->
+
+  <!-- Mostrar Lagerort por defecto (si existe) -->
   <ion-toolbar *ngIf="defaultWarehouse !== null">
     <ion-title size="small">
       Standard-Lagerort (Device): {{ defaultWarehouse }}
@@ -26,9 +27,9 @@
   <ion-card>
     <ion-card-header>
       <ion-card-title>Code scannen oder manuell eingeben</ion-card-title>
-      <ion-card-subtitle
-        >Format: Lagerort#ProcCatCode (z. B. 6#100045)</ion-card-subtitle
-      >
+      <ion-card-subtitle>
+        Format: Lagerort#ProcCatCode (z. B. 6#100045)
+      </ion-card-subtitle>
     </ion-card-header>
     <ion-card-content>
       <ion-item>
@@ -49,8 +50,9 @@
           color="success"
           (click)="addFromParsed(1)"
           [disabled]="!lastParsed"
-          >Hinzufügen</ion-button
         >
+          Hinzufügen
+        </ion-button>
       </div>
 
       <ion-item>
@@ -91,10 +93,10 @@
     </ion-item>
 
     <ion-item *ngIf="lines.length === 0">
-      <ion-label
-        >Keine Positionen vorhanden. Scannen oder Code eingeben und
-        &ldquo;Hinzufügen&rdquo; drücken.</ion-label
-      >
+      <ion-label>
+        Keine Positionen vorhanden. Scannen oder Code eingeben und
+        &ldquo;Hinzufügen&rdquo; drücken.
+      </ion-label>
     </ion-item>
   </ion-list>
 
@@ -102,10 +104,9 @@
   <ion-card *ngIf="selectedIndex !== null && lines[selectedIndex] as sel">
     <ion-card-header>
       <ion-card-title>Position bearbeiten</ion-card-title>
-      <ion-card-subtitle
-        >ProcCatCode: {{ sel.procCatCode }} | Lager: {{ sel.storagePlaceId
-        }}</ion-card-subtitle
-      >
+      <ion-card-subtitle>
+        ProcCatCode: {{ sel.procCatCode }} | Lager: {{ sel.storagePlaceId }}
+      </ion-card-subtitle>
     </ion-card-header>
     <ion-card-content>
       <ion-item lines="full">
@@ -127,6 +128,18 @@
         <ion-toggle [(ngModel)]="editMedIndiziert"></ion-toggle>
       </ion-item>
 
+      <!-- NUEVO: Split parcial -->
+      <ion-item lines="full" class="ion-margin-top">
+        <ion-label position="stacked">Teilmenge für neue Zeile</ion-label>
+        <ion-input
+          type="number"
+          inputmode="decimal"
+          [(ngModel)]="splitQty"
+          placeholder="z. B. 1"
+        >
+        </ion-input>
+      </ion-item>
+
       <div class="ion-text-right ion-margin-top">
         <ion-button color="primary" (click)="saveSelected()"
           >Speichern</ion-button
@@ -134,6 +147,7 @@
         <ion-button fill="outline" (click)="duplicateSelected()"
           >Duplizieren</ion-button
         >
+        <ion-button fill="outline" (click)="splitSelected()">Teilen</ion-button>
         <ion-button color="danger" fill="outline" (click)="deleteSelected()"
           >Löschen</ion-button
         >

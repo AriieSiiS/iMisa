@@ -31,6 +31,9 @@ export class WarenausgangPage {
   editLeistungsdatum: string | null = null; // yyyy-MM-dd
   editMedIndiziert: boolean = false;
 
+  // --- NUEVO: Split parcial
+  splitQty: number | null = null;
+
   constructor(
     private barcodeScanner: BarcodeScanner,
     private common: CommonService,
@@ -38,7 +41,7 @@ export class WarenausgangPage {
   ) {}
 
   async ionViewWillEnter() {
-    await this.loadDefaultWarehouse(); // <-- NUEVO: leer Lagerort por dispositivo
+    await this.loadDefaultWarehouse();
     await this.loadLines();
   }
 
@@ -142,8 +145,15 @@ export class WarenausgangPage {
       );
       return;
     }
+
+    // Fallback opcional: si el QR no trajera Lagerort y hay default => úsalo
+    const storagePlaceId =
+      this.lastParsed.storagePlaceId && this.lastParsed.storagePlaceId > 0
+        ? this.lastParsed.storagePlaceId
+        : this.defaultWarehouse ?? this.lastParsed.storagePlaceId;
+
     const line: WarenausgangLine = {
-      storagePlaceId: this.lastParsed.storagePlaceId,
+      storagePlaceId,
       procCatCode: this.lastParsed.procCatCode,
       qty: defaultQty > 0 ? defaultQty : 1,
       leistungsdatum: null,
@@ -162,10 +172,12 @@ export class WarenausgangPage {
       this.editQty = ln.qty ?? 1;
       this.editLeistungsdatum = ln.leistungsdatum ?? null;
       this.editMedIndiziert = !!ln.medizinischIndiziert;
+      this.splitQty = null; // reset campo de split
     } else {
       this.editQty = null;
       this.editLeistungsdatum = null;
       this.editMedIndiziert = false;
+      this.splitQty = null;
     }
   }
 
@@ -201,7 +213,6 @@ export class WarenausgangPage {
     if (this.lines.length > 0) this.selectLine(0);
   }
 
-  // Duplicado manual (sirve para parciales en próximas iteraciones)
   async duplicateSelected() {
     if (this.selectedIndex === null) return;
     const ln = this.lines[this.selectedIndex];
@@ -213,7 +224,63 @@ export class WarenausgangPage {
     await this.common.showMessage("Position dupliziert.");
   }
 
-  // ---------- Envío (mock) ----------
+  // --- NUEVO: dividir cantidad en una segunda línea (parcial)
+  async splitSelected() {
+    if (this.selectedIndex === null) return;
+    const ln = this.lines[this.selectedIndex];
+    if (!ln) return;
+
+    const part = Number(this.splitQty);
+    const current = Number(ln.qty);
+
+    if (isNaN(part) || part <= 0) {
+      await this.common.showAlertMessage("Teilmenge muss > 0 sein.", "iMisa");
+      return;
+    }
+    if (isNaN(current) || current <= 0) {
+      await this.common.showAlertMessage("Ungültige Ausgangsmenge.", "iMisa");
+      return;
+    }
+    if (part >= current) {
+      await this.common.showAlertMessage(
+        "Teilmenge muss kleiner als die aktuelle Menge sein.",
+        "iMisa"
+      );
+      return;
+    }
+
+    // Nueva línea con 'part'; la original queda con (current - part)
+    ln.qty = current - part;
+    const copy: WarenausgangLine = {
+      ...ln,
+      qty: part,
+    };
+    this.lines.splice(this.selectedIndex + 1, 0, copy);
+
+    await this.persistLines();
+    this.selectLine(this.selectedIndex + 1);
+    await this.common.showMessage("Position geteilt.");
+  }
+
+  // ---------- Payload y envío (mock) ----------
+
+  /**
+   * Prepara el payload para el POST real (sin endpoint aún).
+   * Ajusta nombres de campos aquí cuando tengamos contrato definitivo del backend.
+   */
+  private mapToOutgoingPayload(lines: WarenausgangLine[]) {
+    return {
+      // TODO: añadir cabecera si el backend lo requiere (usuario, deviceId, etc.)
+      Lines: lines.map((ln) => ({
+        StoragePlaceID: ln.storagePlaceId,
+        ProcCatCode: ln.procCatCode,
+        Quantity: ln.qty,
+        Leistungsdatum: ln.leistungsdatum || null,
+        MedizinischIndiziert: !!ln.medizinischIndiziert,
+      })),
+    };
+  }
+
   async sendMock() {
     if (!this.lines || this.lines.length === 0) {
       await this.common.showAlertMessage(
@@ -222,8 +289,23 @@ export class WarenausgangPage {
       );
       return;
     }
+
+    // Preparar payload (para inspección/log si quieres)
+    const payload = this.mapToOutgoingPayload(this.lines);
+    // console.log('Outgoing payload (mock):', payload);
+
     await this.common.showLoader("Warenausgang wird gesendet...");
-    // Simular éxito:
+
+    // FUTURO (real):
+    // try {
+    //   await this.dataAccessService.postOutgoingOrder(payload);
+    // } catch (err) {
+    //   await this.common.hideLoader();
+    //   await this.common.showErrorMessage("Senden fehlgeschlagen: " + (err?.message || err));
+    //   return;
+    // }
+
+    // Mock OK → limpiar
     this.lines = [];
     this.selectedIndex = null;
     await this.persistLines();
