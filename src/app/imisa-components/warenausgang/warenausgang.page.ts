@@ -142,7 +142,13 @@ export class WarenausgangPage {
   }
 
   private initQtyFromProduct(p: Product): number {
-    return p.minqty > 0 ? p.minqty : p.defaultqty || 1;
+    const std = Number((p as any)?.OrdStdQty);
+    if (!Number.isNaN(std) && std > 0) return std;
+
+    if (Number((p as any)?.minqty) > 0) return Number((p as any).minqty);
+    if (Number((p as any)?.defaultqty) > 0)
+      return Number((p as any).defaultqty);
+    return 1;
   }
 
   private applyQtyRules(
@@ -151,9 +157,17 @@ export class WarenausgangPage {
   ): { qty: number; msg: string } {
     let msg = "";
     let qty = Number(qtyIn);
-    const min = Number(p.minqty) || 0;
-    const max = Number(p.maxqty) || Number.MAX_SAFE_INTEGER;
-    const factor = Number(p.factorqty) || 1;
+
+    const min =
+      Number((p as any)?.OrdQtyMin) || Number((p as any)?.minqty) || 0;
+
+    const max =
+      Number((p as any)?.OrdQtyMax) ||
+      Number((p as any)?.maxqty) ||
+      Number.MAX_SAFE_INTEGER;
+
+    const factor =
+      Number((p as any)?.OrdQtyFactor) || Number((p as any)?.factorqty) || 1;
 
     if (qty < min) qty = min;
     if (qty > max) qty = max;
