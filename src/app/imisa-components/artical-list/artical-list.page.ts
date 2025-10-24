@@ -72,16 +72,23 @@ export class ArticalListPage implements OnInit {
   }
 
   async populateArticals() {
-    this.productService
-      .getProducts(this.boundPcat.boundPCatCode)
-      .then((products) => {
+    try {
+      if (this.boundPcat && Number(this.boundPcat.boundPCatCode) > 0) {
+        const products = await this.productService.getProducts(
+          this.boundPcat.boundPCatCode
+        );
         this.arrArticalsItem = products;
         this.arrArticalsItemMaster = products;
-      })
-      .catch((err) => {
-        this.arrArticalsItem = [];
-        this.arrArticalsItemMaster = [];
-      });
+        return;
+      }
+
+      const all = await this.productService.getAllProducts();
+      this.arrArticalsItem = all;
+      this.arrArticalsItemMaster = all;
+    } catch (err) {
+      this.arrArticalsItem = [];
+      this.arrArticalsItemMaster = [];
+    }
   }
 
   async addArticalInOrder(artical: Product) {
