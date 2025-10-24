@@ -3,6 +3,11 @@ import { BarcodeScanner } from "@awesome-cordova-plugins/barcode-scanner/ngx";
 import { CommonService } from "../../imisa-services/common.service";
 import { NativestorageService } from "../../imisa-services/nativestorage.service";
 import { WarenausgangLine } from "../../models/warenausgang";
+import { ProductService } from "../../imisa-services/product.service";
+import { Product } from "../../models/product";
+import { WaHistoryService } from "../../imisa-services/wa-history.service";
+import { WarenausgangHistoryEntry } from "../../models/wa-history";
+import { ActivatedRoute } from "@angular/router";
 
 @Component({
   selector: "app-warenausgang",
@@ -26,23 +31,61 @@ export class WarenausgangPage {
   lines: WarenausgangLine[] = [];
   selectedIndex: number | null = null;
 
-  // Edición actual
+  // Edición actual (carrito)
   editQty: number | null = null;
   editLeistungsdatum: string | null = null; // yyyy-MM-dd
   editMedIndiziert: boolean = false;
 
-  // --- NUEVO: Split parcial
+  // Split parcial
   splitQty: number | null = null;
+
+  // Detalle tipo "compra"
+  detailProduct: Product | null = null;
+  waQty: number | null = null;
+  waDate: string | null = null;
+  waMedInd: boolean = false;
+  detailError: string = "";
+
+  // Group Entry
+  groupActive: boolean = false;
+  groupProducts: Product[] = [];
+  groupIndex: number = 0;
+  groupStoragePlaceId: number = 0;
+  groupCurrent: Product | null = null;
+  groupQty: number | null = null;
+  groupError: string = "";
+  groupConfirmed: WarenausgangLine[] = [];
+  groupRemainderPending: { product: Product; qty: number } | null = null;
+  groupManualConfirmCode: string = "";
+
+  // === NUEVO: caché de productos para mostrar descripción en carrito ===
+  productDescMap: { [code: number]: string } = {};
 
   constructor(
     private barcodeScanner: BarcodeScanner,
     private common: CommonService,
-    private native: NativestorageService
+    private native: NativestorageService,
+    private productService: ProductService,
+    private history: WaHistoryService,
+    private route: ActivatedRoute
   ) {}
 
   async ionViewWillEnter() {
     await this.loadDefaultWarehouse();
     await this.loadLines();
+    await this.hydrateDescriptionsFromLines();
+
+    const codeParam = this.route.snapshot.queryParamMap.get("code");
+    if (codeParam) {
+      const c = Number(codeParam);
+      if (!isNaN(c) && c > 0) {
+        this.lastParsed = {
+          storagePlaceId: this.defaultWarehouse ?? 0,
+          procCatCode: c,
+        };
+        await this.openDetailForProcCat(c);
+      }
+    }
   }
 
   private async loadDefaultWarehouse() {
@@ -81,35 +124,123 @@ export class WarenausgangPage {
     }
   }
 
+  // ---------- helpers ----------
+  private isAllDigits(s: string): boolean {
+    return /^[0-9]+$/.test(s);
+  }
+
+  private async getProductsByBound(boundCode: number): Promise<Product[]> {
+    try {
+      const anySvc: any = this.productService as any;
+      if (typeof anySvc.getProducts === "function") {
+        const list = await anySvc.getProducts(boundCode);
+        if (Array.isArray(list)) return list as Product[];
+      }
+    } catch {}
+    const all = await this.productService.getAllProducts();
+    return all.filter((p) => Number(p.boundPCatCode) === Number(boundCode));
+  }
+
+  private initQtyFromProduct(p: Product): number {
+    return p.minqty > 0 ? p.minqty : p.defaultqty || 1;
+  }
+
+  private applyQtyRules(
+    p: Product,
+    qtyIn: number
+  ): { qty: number; msg: string } {
+    let msg = "";
+    let qty = Number(qtyIn);
+    const min = Number(p.minqty) || 0;
+    const max = Number(p.maxqty) || Number.MAX_SAFE_INTEGER;
+    const factor = Number(p.factorqty) || 1;
+
+    if (qty < min) qty = min;
+    if (qty > max) qty = max;
+
+    if (factor > 1) {
+      const base = min || 0;
+      const delta = qty - base;
+      const remainder = delta % factor;
+      if (remainder !== 0) {
+        qty = base + Math.ceil(delta / factor) * factor;
+        if (qty > max) qty = max;
+        msg = `Die Menge muss ein Vielfaches des Faktors (${factor}) sein. Angepasst auf ${qty}.`;
+      }
+    }
+    return { qty, msg };
+  }
+
+  // === NUEVO: hidratar descripciones para los códigos presentes en lines ===
+  private async hydrateDescriptionsFromLines() {
+    const unique = Array.from(
+      new Set(this.lines.map((l) => Number(l.procCatCode)))
+    );
+    const toFetch = unique.filter((c) => this.productDescMap[c] === undefined);
+    if (toFetch.length === 0) return;
+
+    for (const code of toFetch) {
+      try {
+        const prod = await this.productService.getProductByCodeGlobal(code);
+        this.productDescMap[code] = prod?.descinternal || `#${code}`;
+      } catch {
+        this.productDescMap[code] = `#${code}`;
+      }
+    }
+  }
+
   // ---------- Scan / parse ----------
   private async parseCode(rawIn: string) {
-    const raw = (rawIn ?? "").replace(/\s+/g, "").trim();
+    const raw = (rawIn ?? "").trim();
     this.lastRaw = raw;
     this.lastParsed = null;
+    this.detailProduct = null;
+    this.groupActive = false;
 
     if (!raw) {
       await this.common.showAlertMessage("Kein Code erkannt.", "iMisa");
       return;
     }
 
-    const parts = raw.split("#");
-    if (parts.length !== 2) {
+    if (raw.indexOf("#") === -1) {
+      if (!this.isAllDigits(raw)) {
+        await this.common.showAlertMessage(
+          "Ungültiges Format. Erwartet: Zahl (Group) oder Lagerort#Code.",
+          "iMisa"
+        );
+        return;
+      }
+      const boundCode = Number(raw);
+      const storagePlaceId = this.defaultWarehouse ?? 0;
+      await this.startGroupWizard(boundCode, storagePlaceId);
+      return;
+    }
+
+    const cleaned = raw.replace(/\s+/g, "");
+    const parts = cleaned.split("#");
+    if (
+      parts.length !== 2 ||
+      !this.isAllDigits(parts[0]) ||
+      !this.isAllDigits(parts[1])
+    ) {
       await this.common.showAlertMessage(
-        "Ungültiges Format (erwartet: Lagerort#ProcCatCode).",
+        "Ungültiges Format (erwartet: Lagerort#Code).",
         "iMisa"
       );
       return;
     }
 
     const storagePlaceId = Number(parts[0]);
-    const procCatCode = Number(parts[1]);
+    const code = Number(parts[1]);
 
-    if (isNaN(storagePlaceId) || isNaN(procCatCode)) {
-      await this.common.showAlertMessage("Ungültige Nummern im Code.", "iMisa");
+    const children = await this.getProductsByBound(code);
+    if (children.length > 0) {
+      await this.startGroupWizard(code, storagePlaceId);
       return;
     }
 
-    this.lastParsed = { storagePlaceId, procCatCode };
+    this.lastParsed = { storagePlaceId, procCatCode: code };
+    await this.openDetailForProcCat(code);
     await this.common.showMessage("Code erkannt.");
   }
 
@@ -136,7 +267,227 @@ export class WarenausgangPage {
     await this.parseCode(this.manualCode);
   }
 
-  // ---------- Líneas ----------
+  // ---------- Detalle tipo compra (ProcCatCode) ----------
+  private async openDetailForProcCat(procCatCode: number) {
+    const prod = await this.productService.getProductByCodeGlobal(procCatCode);
+    if (!prod) {
+      await this.common.showAlertMessage(
+        "Ungültiger Code (nicht im Katalog).",
+        "iMisa"
+      );
+      this.detailProduct = null;
+      return;
+    }
+    this.detailProduct = prod;
+    this.waQty = this.initQtyFromProduct(prod);
+    this.waDate = null;
+    this.waMedInd = false;
+    this.detailError = "";
+  }
+
+  validateWaQty(newVal: any) {
+    if (!this.detailProduct) return;
+    const r = this.applyQtyRules(this.detailProduct, Number(newVal));
+    this.waQty = r.qty;
+    this.detailError = r.msg;
+  }
+
+  async confirmDetailToCart() {
+    if (!this.detailProduct || !this.lastParsed) return;
+
+    const q = Number(this.waQty);
+    if (isNaN(q) || q <= 0) {
+      await this.common.showAlertMessage("Ungültige Menge.", "iMisa");
+      return;
+    }
+
+    const storagePlaceId =
+      this.lastParsed.storagePlaceId && this.lastParsed.storagePlaceId > 0
+        ? this.lastParsed.storagePlaceId
+        : this.defaultWarehouse ?? 0;
+
+    const line: WarenausgangLine = {
+      storagePlaceId,
+      procCatCode: this.detailProduct.code,
+      qty: q,
+      leistungsdatum: this.waDate || null,
+      medizinischIndiziert: !!this.waMedInd,
+    };
+
+    this.lines.unshift(line);
+    await this.persistLines();
+    await this.hydrateDescriptionsFromLines();
+
+    // limpiar detalle
+    this.detailProduct = null;
+    this.waQty = null;
+    this.waDate = null;
+    this.waMedInd = false;
+    this.detailError = "";
+
+    this.selectLine(0);
+    await this.common.showMessage("Position hinzugefügt.");
+  }
+
+  // ---------- Group entry wizard ----------
+  private async startGroupWizard(boundCode: number, storagePlaceId: number) {
+    const children = await this.getProductsByBound(boundCode);
+    if (!children || children.length === 0) {
+      await this.common.showAlertMessage(
+        "Keine Gruppenartikel gefunden.",
+        "iMisa"
+      );
+      return;
+    }
+
+    this.groupActive = true;
+    this.groupProducts = children;
+    this.groupStoragePlaceId =
+      storagePlaceId && storagePlaceId > 0
+        ? storagePlaceId
+        : this.defaultWarehouse ?? 0;
+    this.groupConfirmed = [];
+    this.groupIndex = 0;
+    this.groupRemainderPending = null;
+    this.groupManualConfirmCode = "";
+
+    await this.loadGroupCurrent();
+  }
+
+  private async loadGroupCurrent() {
+    this.groupError = "";
+    this.groupRemainderPending = null;
+    this.groupManualConfirmCode = "";
+
+    this.groupCurrent = this.groupProducts[this.groupIndex] || null;
+    if (!this.groupCurrent) {
+      if (this.groupConfirmed.length > 0) {
+        this.lines = [...this.groupConfirmed, ...this.lines];
+        await this.persistLines();
+        await this.hydrateDescriptionsFromLines();
+        await this.common.showMessage("Gruppenpositionen hinzugefügt.");
+      }
+      this.groupActive = false;
+      this.groupProducts = [];
+      this.groupIndex = 0;
+      this.groupConfirmed = [];
+      this.groupCurrent = null;
+      this.groupQty = null;
+      return;
+    }
+
+    this.groupQty = this.initQtyFromProduct(this.groupCurrent);
+  }
+
+  validateGroupQty(newVal: any) {
+    if (!this.groupCurrent) return;
+    const r = this.applyQtyRules(this.groupCurrent, Number(newVal));
+    this.groupQty = r.qty;
+    this.groupError = r.msg;
+  }
+
+  async groupSkip() {
+    this.groupIndex++;
+    await this.loadGroupCurrent();
+  }
+
+  async groupConfirm() {
+    if (!this.groupCurrent) return;
+    const prod = this.groupCurrent;
+    const defaultQty = this.initQtyFromProduct(prod);
+    const chosen = Number(this.groupQty);
+
+    if (isNaN(chosen) || chosen <= 0) {
+      await this.common.showAlertMessage("Ungültige Menge.", "iMisa");
+      return;
+    }
+
+    if (chosen >= defaultQty) {
+      this.groupConfirmed.push({
+        storagePlaceId: this.groupStoragePlaceId,
+        procCatCode: prod.code,
+        qty: chosen,
+        leistungsdatum: null,
+        medizinischIndiziert: false,
+      });
+      this.groupIndex++;
+      await this.loadGroupCurrent();
+      return;
+    }
+
+    const remainder = defaultQty - chosen;
+
+    this.groupConfirmed.push({
+      storagePlaceId: this.groupStoragePlaceId,
+      procCatCode: prod.code,
+      qty: chosen,
+      leistungsdatum: null,
+      medizinischIndiziert: false,
+    });
+
+    this.groupRemainderPending = { product: prod, qty: remainder };
+    await this.common.showMessage(
+      `Restmenge ${remainder} bestätigen (Scan oder manuell).`
+    );
+  }
+
+  async groupConfirmRemainderByScan() {
+    if (!this.groupRemainderPending) return;
+    try {
+      const result = await this.barcodeScanner.scan({
+        showFlipCameraButton: true,
+        showTorchButton: true,
+        prompt: "Restmenge bestätigen – Artikel scannen",
+        resultDisplayDuration: 0,
+        formats: "QR_CODE,DATA_MATRIX,CODE_128,EAN_13",
+        orientation: "portrait",
+      });
+      if (result?.cancelled) return;
+      const text = (result?.text ?? "").trim();
+      const code = Number(text.replace(/\s+/g, ""));
+      await this.handleRemainderConfirmation(code);
+    } catch (err) {
+      await this.common.showErrorMessage(
+        "Scan fehlgeschlagen: " + (err?.message || err)
+      );
+    }
+  }
+
+  async groupConfirmRemainderByManual() {
+    if (!this.groupRemainderPending) return;
+    const code = Number((this.groupManualConfirmCode ?? "").trim());
+    await this.handleRemainderConfirmation(code);
+  }
+
+  private async handleRemainderConfirmation(enteredCode: number) {
+    const pending = this.groupRemainderPending!;
+    if (isNaN(enteredCode) || enteredCode <= 0) {
+      await this.common.showAlertMessage(
+        "Ungültiger Code zur Bestätigung.",
+        "iMisa"
+      );
+      return;
+    }
+    if (Number(pending.product.code) !== Number(enteredCode)) {
+      await this.common.showAlertMessage("Code stimmt nicht überein.", "iMisa");
+      return;
+    }
+
+    this.groupConfirmed.push({
+      storagePlaceId: this.groupStoragePlaceId,
+      procCatCode: pending.product.code,
+      qty: pending.qty,
+      leistungsdatum: null,
+      medizinischIndiziert: false,
+    });
+
+    this.groupRemainderPending = null;
+    this.groupManualConfirmCode = "";
+    this.groupIndex++;
+    await this.loadGroupCurrent();
+  }
+
+  // ---------- Líneas (carrito) ----------
   async addFromParsed(defaultQty: number = 1) {
     if (!this.lastParsed) {
       await this.common.showAlertMessage(
@@ -146,7 +497,6 @@ export class WarenausgangPage {
       return;
     }
 
-    // Fallback opcional: si el QR no trajera Lagerort y hay default => úsalo
     const storagePlaceId =
       this.lastParsed.storagePlaceId && this.lastParsed.storagePlaceId > 0
         ? this.lastParsed.storagePlaceId
@@ -161,6 +511,7 @@ export class WarenausgangPage {
     };
     this.lines.unshift(line);
     await this.persistLines();
+    await this.hydrateDescriptionsFromLines();
     this.selectLine(0);
     await this.common.showMessage("Position hinzugefügt.");
   }
@@ -172,7 +523,7 @@ export class WarenausgangPage {
       this.editQty = ln.qty ?? 1;
       this.editLeistungsdatum = ln.leistungsdatum ?? null;
       this.editMedIndiziert = !!ln.medizinischIndiziert;
-      this.splitQty = null; // reset campo de split
+      this.splitQty = null;
     } else {
       this.editQty = null;
       this.editLeistungsdatum = null;
@@ -210,6 +561,7 @@ export class WarenausgangPage {
     this.lines.splice(idx, 1);
     this.selectedIndex = null;
     await this.persistLines();
+    await this.hydrateDescriptionsFromLines();
     if (this.lines.length > 0) this.selectLine(0);
   }
 
@@ -220,11 +572,12 @@ export class WarenausgangPage {
     const copy: WarenausgangLine = { ...ln };
     this.lines.splice(this.selectedIndex + 1, 0, copy);
     await this.persistLines();
+    await this.hydrateDescriptionsFromLines();
     this.selectLine(this.selectedIndex + 1);
     await this.common.showMessage("Position dupliziert.");
   }
 
-  // --- NUEVO: dividir cantidad en una segunda línea (parcial)
+  // Split parcial (Teilen): mueve una parte a una nueva línea
   async splitSelected() {
     if (this.selectedIndex === null) return;
     const ln = this.lines[this.selectedIndex];
@@ -251,26 +604,26 @@ export class WarenausgangPage {
 
     // Nueva línea con 'part'; la original queda con (current - part)
     ln.qty = current - part;
-    const copy: WarenausgangLine = {
-      ...ln,
-      qty: part,
-    };
+    const copy: WarenausgangLine = { ...ln, qty: part };
     this.lines.splice(this.selectedIndex + 1, 0, copy);
 
     await this.persistLines();
+    await this.hydrateDescriptionsFromLines();
     this.selectLine(this.selectedIndex + 1);
     await this.common.showMessage("Position geteilt.");
   }
 
-  // ---------- Payload y envío (mock) ----------
+  async deleteLine(index: number) {
+    if (index < 0 || index >= this.lines.length) return;
+    this.lines.splice(index, 1);
+    if (this.selectedIndex === index) this.selectedIndex = null;
+    await this.persistLines();
+    await this.hydrateDescriptionsFromLines();
+  }
 
-  /**
-   * Prepara el payload para el POST real (sin endpoint aún).
-   * Ajusta nombres de campos aquí cuando tengamos contrato definitivo del backend.
-   */
+  // ---------- Payload y envío (mock) ----------
   private mapToOutgoingPayload(lines: WarenausgangLine[]) {
     return {
-      // TODO: añadir cabecera si el backend lo requiere (usuario, deviceId, etc.)
       Lines: lines.map((ln) => ({
         StoragePlaceID: ln.storagePlaceId,
         ProcCatCode: ln.procCatCode,
@@ -290,22 +643,37 @@ export class WarenausgangPage {
       return;
     }
 
-    // Preparar payload (para inspección/log si quieres)
     const payload = this.mapToOutgoingPayload(this.lines);
-    // console.log('Outgoing payload (mock):', payload);
 
     await this.common.showLoader("Warenausgang wird gesendet...");
 
-    // FUTURO (real):
-    // try {
-    //   await this.dataAccessService.postOutgoingOrder(payload);
-    // } catch (err) {
-    //   await this.common.hideLoader();
-    //   await this.common.showErrorMessage("Senden fehlgeschlagen: " + (err?.message || err));
-    //   return;
-    // }
+    // Crear entrada de historial
+    const totalLines = this.lines.length;
+    const totalQty = this.lines.reduce((s, x) => s + Number(x.qty || 0), 0);
+    const homogLager = this.lines.every(
+      (x) => x.storagePlaceId === this.lines[0].storagePlaceId
+    )
+      ? this.lines[0].storagePlaceId
+      : null;
 
-    // Mock OK → limpiar
+    const entry: WarenausgangHistoryEntry = {
+      id: Math.random().toString(36).slice(2) + Date.now().toString(36),
+      createdAtIso: new Date().toISOString(),
+      storagePlaceId: homogLager,
+      totalLines,
+      totalQty,
+      payload,
+      lines: this.lines.map((ln) => ({
+        storagePlaceId: ln.storagePlaceId,
+        procCatCode: ln.procCatCode,
+        qty: ln.qty,
+        leistungsdatum: ln.leistungsdatum || null,
+        medizinischIndiziert: !!ln.medizinischIndiziert,
+      })),
+    };
+
+    await this.history.add(entry);
+
     this.lines = [];
     this.selectedIndex = null;
     await this.persistLines();

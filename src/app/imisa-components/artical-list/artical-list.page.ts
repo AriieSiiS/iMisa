@@ -44,10 +44,23 @@ export class ArticalListPage implements OnInit {
 
   ionViewWillEnter() {
     this.commonService.currentPresentedPage = "artilcal-list";
+    if (this.router.url.startsWith("/wa-tabs")) {
+      this.defaultBackLink = "/wa-tabs/order";
+    } else {
+      this.defaultBackLink = "/tabs/articals";
+    }
   }
 
   editArtical(articalItem: Product) {
     articalItem.boundPCatagoryDescription = this.boundPcat.descinternal;
+
+    if (this.router.url.startsWith("/wa-tabs")) {
+      this.router.navigate(["/wa-tabs/order"], {
+        queryParams: { code: articalItem.code },
+      });
+      return;
+    }
+
     this.router.navigate(["tabs/articals/artical-list/edit-artical"], {
       queryParams: {
         code: articalItem.code,

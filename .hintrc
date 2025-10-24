@@ -7,7 +7,8 @@
       "default",
       {
         "ignore": [
-          "ion-input[inputmode]"
+          "ion-input[inputmode]",
+          "ion-input[autocapitalize]"
         ]
       }
     ],

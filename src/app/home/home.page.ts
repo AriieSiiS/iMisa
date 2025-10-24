@@ -151,7 +151,7 @@ export class HomePage implements OnInit {
     this.router.navigateByUrl("inventory");
   }
 
-  openOutgoingOrder() {
-    this.router.navigateByUrl("warenausgang");
+  goToWarenausgangTabs() {
+    this.router.navigateByUrl("/wa-tabs");
   }
 }

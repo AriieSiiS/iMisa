@@ -1,6 +1,7 @@
 import { Component, OnInit } from "@angular/core";
 import { CommonService } from "../../imisa-services/common.service";
 import { NativestorageService } from "../../imisa-services/nativestorage.service";
+import { Router } from "@angular/router";
 
 @Component({
   selector: "app-app-settings",
@@ -21,7 +22,8 @@ export class AppSettingsPage implements OnInit {
 
   constructor(
     private commonService: CommonService,
-    private nativeStorage: NativestorageService
+    private nativeStorage: NativestorageService,
+    private router: Router
   ) {}
 
   ngOnInit() {}
@@ -31,7 +33,6 @@ export class AppSettingsPage implements OnInit {
     this.restUser = await this.commonService.getRestUser();
     this.restPassword = await this.commonService.getRestPassword();
 
-    // Cargar Lagerort guardado (si existe)
     try {
       const v = await this.nativeStorage.getNativeValue(
         this.WAREHOUSE_LOCATION_KEY
@@ -40,6 +41,14 @@ export class AppSettingsPage implements OnInit {
         v !== null && v !== undefined && v !== "" ? Number(v) : null;
     } catch {
       this.warehouseLocation = null;
+    }
+
+    if (this.router.url.startsWith("/wa-tabs")) {
+      this.defaultBackLink = "/wa-tabs/order";
+    } else if (this.router.url.startsWith("/tabs")) {
+      this.defaultBackLink = "/tabs/articals";
+    } else {
+      this.defaultBackLink = "/home";
     }
   }
 

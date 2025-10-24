@@ -43,4 +43,32 @@ export class ProductService {
     const found = products.find((p) => Number(p.code) === Number(productCode));
     return found ?? null;
   }
+
+  async getAllProducts(): Promise<Product[]> {
+    const productsRaw: any[] = await this.nativestorageService.getNativeValue(
+      "products"
+    );
+    if (!productsRaw) return [];
+    return productsRaw.map((item: any) => {
+      const p = new Product();
+      p.boundPCatCode = Number(item.BoundPCatCode);
+      p.descinternal = item.DescInternalGe;
+      p.code = Number(item.Code);
+      p.searchcode = item.SearchCode;
+      p.mawiMatGroup = Number(item.MatGroup);
+      p.mawiMatControl = Number(item.MatControl);
+      p.defaultqty = Number(item.OrdStdQty);
+      p.minqty = Number(item.OrdQtyMin);
+      p.maxqty = Number(item.OrdQtyMax);
+      p.factorqty = Number(item.OrdQtyFactor);
+      p.boundPCatagoryDescription = "";
+      return p;
+    });
+  }
+
+  async getProductByCodeGlobal(productCode: number): Promise<Product | null> {
+    const all = await this.getAllProducts();
+    const found = all.find((p) => Number(p.code) === Number(productCode));
+    return found ?? null;
+  }
 }

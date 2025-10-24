@@ -1,14 +1,22 @@
 <ion-header>
-  <ion-toolbar>
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/home"></ion-back-button>
+  <ion-toolbar color="dark" class="ion-color ion-color-dark">
+    <ion-buttons slot="secondary">
+      <ion-button fill="solid" routerLink="/home" routerDirection="root">
+        <ion-icon slot="start" color="primary" name="home"></ion-icon>
+        Misa&nbsp;&nbsp;
+      </ion-button>
     </ion-buttons>
+
     <ion-title>Warenausgang</ion-title>
-    <ion-buttons slot="end">
-      <ion-button (click)="scanAndParse()" aria-label="Scan Warenausgang">
+
+    <ion-buttons slot="primary">
+      <ion-button (click)="scanAndParse()" aria-label="Scan">
         <ion-icon name="camera-outline"></ion-icon>
       </ion-button>
-      <ion-button color="primary" (click)="sendMock()" aria-label="Send Mock">
+      <ion-button routerLink="/warenausgang-history" aria-label="History">
+        <ion-icon name="time-outline"></ion-icon>
+      </ion-button>
+      <ion-button color="primary" (click)="sendMock()" aria-label="Send">
         <ion-icon name="paper-plane-outline"></ion-icon>
       </ion-button>
     </ion-buttons>
@@ -23,12 +31,15 @@
 </ion-header>
 
 <ion-content class="ion-padding">
-  <!-- Entrada manual + Añadir -->
+  <!-- Entrada manual / Scan -->
   <ion-card>
     <ion-card-header>
       <ion-card-title>Code scannen oder manuell eingeben</ion-card-title>
       <ion-card-subtitle>
-        Format: Lagerort#ProcCatCode (z. B. 6#100045)
+        Formate:
+        <br />- Lagerort#ProcCatCode (z. B. 6#100045) <br />- BoundPCatCode (z.
+        B. 105382) → Gruppen-Wizard <br />- Lagerort#BoundPCatCode (z. B.
+        6#105382) → Gruppen-Wizard
       </ion-card-subtitle>
     </ion-card-header>
     <ion-card-content>
@@ -36,7 +47,7 @@
         <ion-label position="stacked">Code</ion-label>
         <ion-input
           [(ngModel)]="manualCode"
-          placeholder="z. B. 6#100045"
+          placeholder="z. B. 6#100045 oder 105382"
           autocapitalize="off"
           autocomplete="off"
           autocorrect="off"
@@ -65,32 +76,233 @@
         <ion-label>
           <h2>Parsed</h2>
           <p>Lagerort (StoragePlaceID): {{ lastParsed.storagePlaceId }}</p>
-          <p>ProcCatCode: {{ lastParsed.procCatCode }}</p>
+          <p>Code: {{ lastParsed.procCatCode }}</p>
         </ion-label>
       </ion-item>
     </ion-card-content>
   </ion-card>
 
-  <!-- Lista de posiciones -->
-  <ion-list inset="true">
-    <ion-item
-      button
-      detail="false"
-      *ngFor="let ln of lines; let i = index"
-      (click)="selectLine(i)"
-      [color]="selectedIndex === i ? 'light' : undefined"
-    >
-      <ion-label>
-        <h2>
-          ProcCatCode: {{ ln.procCatCode }} | Lager: {{ ln.storagePlaceId }}
-        </h2>
-        <p>Menge: {{ ln.qty }}</p>
-        <p *ngIf="ln.leistungsdatum">Leistungsdatum: {{ ln.leistungsdatum }}</p>
-        <p>
-          Medizinisch indiziert: {{ ln.medizinischIndiziert ? 'Ja' : 'Nein' }}
-        </p>
-      </ion-label>
+  <!-- DETALLE TIPO COMPRA (clonado visual de item-edit) -->
+  <ng-container *ngIf="detailProduct && !groupActive">
+    <ion-row>
+      <ion-col>
+        <label><strong>Bezeichnung:</strong></label>
+      </ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col>
+        <label>{{ detailProduct.descinternal }}</label>
+      </ion-col>
+    </ion-row>
+
+    <ion-row>
+      <ion-col>
+        <label><strong>Kategorie:</strong></label>
+      </ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col>
+        <label
+          >{{ detailProduct.boundPCatagoryDescription ||
+          detailProduct.boundPCatCode }}</label
+        >
+      </ion-col>
+    </ion-row>
+
+    <ion-row>
+      <ion-col>
+        <label><strong>Artikel Number:</strong></label>
+      </ion-col>
+      <ion-col>
+        <label>{{ detailProduct.code }}</label>
+      </ion-col>
+    </ion-row>
+
+    <ion-row>
+      <ion-col>
+        <label><strong>Suchcode:</strong></label>
+      </ion-col>
+      <ion-col>
+        <label>{{ detailProduct.searchcode || '-' }}</label>
+      </ion-col>
+    </ion-row>
+
+    <ion-row>
+      <ion-col>
+        <label><strong>Min. Menge:</strong></label>
+      </ion-col>
+      <ion-col>
+        <label>{{ detailProduct.minqty }}</label>
+      </ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col>
+        <label><strong>Max. Menge:</strong></label>
+      </ion-col>
+      <ion-col>
+        <label>{{ detailProduct.maxqty }}</label>
+      </ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col>
+        <label><strong>Faktor:</strong></label>
+      </ion-col>
+      <ion-col>
+        <label>{{ detailProduct.factorqty }}</label>
+      </ion-col>
+    </ion-row>
+
+    <ion-item lines="full">
+      <ion-label position="floating"><strong>Menge:</strong></ion-label>
+      <ion-input
+        [value]="waQty"
+        (ionChange)="validateWaQty($event.detail.value)"
+        inputmode="decimal"
+      >
+      </ion-input>
     </ion-item>
+
+    <ion-label *ngIf="detailError">
+      <p style="color: red">{{ detailError }}</p>
+    </ion-label>
+
+    <ion-item lines="full">
+      <ion-label position="floating"
+        ><strong>Leistungsdatum:</strong></ion-label
+      >
+      <ion-input type="date" [(ngModel)]="waDate"></ion-input>
+    </ion-item>
+
+    <ion-item lines="none">
+      <ion-label>Medizinisch indiziert</ion-label>
+      <ion-toggle [(ngModel)]="waMedInd"></ion-toggle>
+    </ion-item>
+
+    <ion-row>
+      <ion-col>
+        <ion-button
+          color="primary"
+          expand="block"
+          (click)="confirmDetailToCart()"
+        >
+          <ion-icon slot="start" name="cart"></ion-icon>
+          Speichern
+        </ion-button>
+      </ion-col>
+      <ion-col size="auto">
+        <ion-button
+          fill="outline"
+          expand="block"
+          (click)="detailProduct = null"
+        >
+          Abbrechen
+        </ion-button>
+      </ion-col>
+    </ion-row>
+  </ng-container>
+
+  <!-- WIZARD DE GRUPO -->
+  <ion-card *ngIf="groupActive">
+    <ion-card-header>
+      <ion-card-title>Gruppeneingabe</ion-card-title>
+      <ion-card-subtitle
+        >Artikel {{ groupIndex + 1 }} / {{ groupProducts.length
+        }}</ion-card-subtitle
+      >
+    </ion-card-header>
+    <ion-card-content *ngIf="groupCurrent">
+      <ion-item>
+        <ion-label>
+          <h2>{{ groupCurrent.descinternal }}</h2>
+          <p>Code: {{ groupCurrent.code }}</p>
+          <p>Kategorie: {{ groupCurrent.boundPCatCode }}</p>
+          <p>Standard-Lagerort: {{ groupStoragePlaceId }}</p>
+        </ion-label>
+      </ion-item>
+
+      <ion-item lines="full" class="ion-margin-top">
+        <ion-label position="floating"><strong>Menge</strong></ion-label>
+        <ion-input
+          [value]="groupQty"
+          (ionChange)="validateGroupQty($event.detail.value)"
+          inputmode="decimal"
+        >
+        </ion-input>
+      </ion-item>
+      <ion-text color="warning" *ngIf="groupError">{{ groupError }}</ion-text>
+
+      <ion-item *ngIf="groupRemainderPending" class="ion-margin-top">
+        <ion-label>
+          Restmenge zu bestätigen: {{ groupRemainderPending.qty }} (Code: {{
+          groupRemainderPending.product.code }})
+        </ion-label>
+      </ion-item>
+
+      <div class="ion-margin-top" *ngIf="groupRemainderPending">
+        <ion-button expand="block" (click)="groupConfirmRemainderByScan()">
+          Restmenge via Scan bestätigen
+        </ion-button>
+        <ion-item class="ion-margin-top">
+          <ion-label position="stacked">Code manuell eingeben</ion-label>
+          <ion-input
+            [(ngModel)]="groupManualConfirmCode"
+            inputmode="numeric"
+            placeholder="{{ groupRemainderPending.product.code }}"
+          >
+          </ion-input>
+        </ion-item>
+        <div class="ion-text-right ion-margin-top">
+          <ion-button (click)="groupConfirmRemainderByManual()"
+            >Bestätigen</ion-button
+          >
+        </div>
+      </div>
+
+      <div class="ion-text-right ion-margin-top" *ngIf="!groupRemainderPending">
+        <ion-button color="success" (click)="groupConfirm()"
+          >Confirm</ion-button
+        >
+        <ion-button fill="outline" (click)="groupSkip()">Skip</ion-button>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Carrito con descripciones + swipe-to-delete -->
+  <ion-list inset="true">
+    <ion-item-sliding *ngFor="let ln of lines; let i = index">
+      <ion-item
+        button
+        detail="false"
+        (click)="selectLine(i)"
+        [color]="selectedIndex === i ? 'light' : undefined"
+      >
+        <ion-icon slot="start" name="cube-outline" color="primary"></ion-icon>
+        <ion-label>
+          <h2>
+            {{ productDescMap[ln.procCatCode] || ('#' + ln.procCatCode) }}
+          </h2>
+          <p>Code: {{ ln.procCatCode }} — Lager: {{ ln.storagePlaceId }}</p>
+          <p *ngIf="ln.leistungsdatum">
+            Leistungsdatum: {{ ln.leistungsdatum }}
+          </p>
+          <p>
+            Medizinisch indiziert: {{ ln.medizinischIndiziert ? 'Ja' : 'Nein' }}
+          </p>
+        </ion-label>
+        <ion-note slot="end">{{ ln.qty }}</ion-note>
+        <ion-icon
+          slot="end"
+          color="primary"
+          name="chevron-forward-outline"
+        ></ion-icon>
+      </ion-item>
+
+      <ion-item-options side="end">
+        <ion-item-option color="danger" (click)="deleteLine(i)">
+          <ion-icon name="trash" slot="icon-only"></ion-icon>
+        </ion-item-option>
+      </ion-item-options>
+    </ion-item-sliding>
 
     <ion-item *ngIf="lines.length === 0">
       <ion-label>
@@ -100,12 +312,12 @@
     </ion-item>
   </ion-list>
 
-  <!-- Panel de edición -->
+  <!-- Panel de edición del carrito -->
   <ion-card *ngIf="selectedIndex !== null && lines[selectedIndex] as sel">
     <ion-card-header>
       <ion-card-title>Position bearbeiten</ion-card-title>
       <ion-card-subtitle>
-        ProcCatCode: {{ sel.procCatCode }} | Lager: {{ sel.storagePlaceId }}
+        {{ productDescMap[sel.procCatCode] || ('#' + sel.procCatCode) }}
       </ion-card-subtitle>
     </ion-card-header>
     <ion-card-content>
@@ -128,7 +340,6 @@
         <ion-toggle [(ngModel)]="editMedIndiziert"></ion-toggle>
       </ion-item>
 
-      <!-- NUEVO: Split parcial -->
       <ion-item lines="full" class="ion-margin-top">
         <ion-label position="stacked">Teilmenge für neue Zeile</ion-label>
         <ion-input

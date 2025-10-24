@@ -1,0 +1,71 @@
+<ion-header>
+  <ion-toolbar color="dark" class="ion-color ion-color-dark">
+    <ion-buttons slot="secondary">
+      <ion-button fill="solid" routerLink="/home" routerDirection="root">
+        <ion-icon slot="start" color="primary" name="home"></ion-icon>
+        Misa
+      </ion-button>
+    </ion-buttons>
+
+    <ion-buttons slot="end">
+      <ion-button fill="solid" color="medium" (click)="clearHistory()">
+        <ion-icon slot="start" name="trash"></ion-icon>
+        Löschen
+      </ion-button>
+    </ion-buttons>
+
+    <ion-title>History</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <ion-list inset="true">
+    <ion-item
+      *ngFor="let it of items; trackBy: trackById"
+      button
+      (click)="select(it.id)"
+      [detail]="true"
+      [color]="selectedId === it.id ? 'light' : undefined"
+    >
+      <ion-icon slot="start" name="time-outline" color="primary"></ion-icon>
+      <ion-label>
+        <h2>{{ it.createdAtIso | date:'medium' }}</h2>
+        <p>Lines: {{ it.totalLines }} — Qty: {{ it.totalQty }}</p>
+        <p *ngIf="it.storagePlaceId !== null">
+          Lagerort: {{ it.storagePlaceId }}
+        </p>
+      </ion-label>
+    </ion-item>
+
+    <ion-item *ngIf="items.length === 0">
+      <ion-label>Kein Verlauf vorhanden.</ion-label>
+    </ion-item>
+  </ion-list>
+
+  <!-- Detalle inline del seleccionado -->
+  <ion-card *ngIf="getSelected() as sel">
+    <ion-card-header>
+      <ion-card-title>Details</ion-card-title>
+      <ion-card-subtitle>
+        {{ sel.createdAtIso | date:'medium' }}
+      </ion-card-subtitle>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-list>
+        <ion-item *ngFor="let ln of sel.lines; let i = index">
+          <ion-label>
+            <h2>#{{ i + 1 }} — ProcCatCode: {{ ln.procCatCode }}</h2>
+            <p>Lager: {{ ln.storagePlaceId }} — Menge: {{ ln.qty }}</p>
+            <p *ngIf="ln.leistungsdatum">
+              Leistungsdatum: {{ ln.leistungsdatum }}
+            </p>
+            <p>
+              Medizinisch indiziert: {{ ln.medizinischIndiziert ? 'Ja' : 'Nein'
+              }}
+            </p>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+    </ion-card-content>
+  </ion-card>
+</ion-content>

@@ -1,0 +1,23 @@
+<ion-tabs>
+  <ion-tab-bar slot="bottom" color="dark" class="ion-color ion-color-dark">
+    <ion-tab-button tab="order" [routerLink]="['/wa-tabs/order']">
+      <ion-icon name="cart"></ion-icon>
+      <ion-label>Bestellung</ion-label>
+    </ion-tab-button>
+
+    <ion-tab-button tab="artical-list" [routerLink]="['/wa-tabs/artical-list']">
+      <ion-icon name="star"></ion-icon>
+      <ion-label>Artikel Listen</ion-label>
+    </ion-tab-button>
+
+    <ion-tab-button tab="history" [routerLink]="['/wa-tabs/history']">
+      <ion-icon name="folder"></ion-icon>
+      <ion-label>Bestell History</ion-label>
+    </ion-tab-button>
+
+    <ion-tab-button tab="settings" [routerLink]="['/wa-tabs/settings']">
+      <ion-icon name="settings"></ion-icon>
+      <ion-label>Settings</ion-label>
+    </ion-tab-button>
+  </ion-tab-bar>
+</ion-tabs>
