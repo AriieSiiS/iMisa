@@ -44,7 +44,6 @@ export class ArticalListPage implements OnInit {
 
   ionViewWillEnter() {
     this.commonService.currentPresentedPage = "artilcal-list";
-    // En WA, el "atrás" debe volver a las CATEGORÍAS de WA, no al carrito
     if (this.router.url.startsWith("/wa-tabs")) {
       this.defaultBackLink = "/wa-tabs/articals";
     } else {
@@ -56,7 +55,6 @@ export class ArticalListPage implements OnInit {
     articalItem.boundPCatagoryDescription = this.boundPcat.descinternal;
 
     if (this.router.url.startsWith("/wa-tabs")) {
-      // En WA: abrir el detalle dentro de Warenausgang (mismo flujo WA)
       this.router.navigate(["/wa-tabs/order"], {
         queryParams: { code: articalItem.code },
       });
@@ -82,6 +80,12 @@ export class ArticalListPage implements OnInit {
         );
         this.arrArticalsItem = products;
         this.arrArticalsItemMaster = products;
+        return;
+      }
+
+      // Entrada sin boundPcat dentro de WA → ir a categorías
+      if (this.router.url.startsWith("/wa-tabs")) {
+        this.router.navigate(["/wa-tabs/articals"], { replaceUrl: true });
         return;
       }
 
