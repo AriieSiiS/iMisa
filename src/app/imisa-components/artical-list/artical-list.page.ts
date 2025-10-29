@@ -44,8 +44,9 @@ export class ArticalListPage implements OnInit {
 
   ionViewWillEnter() {
     this.commonService.currentPresentedPage = "artilcal-list";
+    // En WA, el "atrás" debe volver a las CATEGORÍAS de WA, no al carrito
     if (this.router.url.startsWith("/wa-tabs")) {
-      this.defaultBackLink = "/wa-tabs/order";
+      this.defaultBackLink = "/wa-tabs/articals";
     } else {
       this.defaultBackLink = "/tabs/articals";
     }
@@ -55,12 +56,14 @@ export class ArticalListPage implements OnInit {
     articalItem.boundPCatagoryDescription = this.boundPcat.descinternal;
 
     if (this.router.url.startsWith("/wa-tabs")) {
+      // En WA: abrir el detalle dentro de Warenausgang (mismo flujo WA)
       this.router.navigate(["/wa-tabs/order"], {
         queryParams: { code: articalItem.code },
       });
       return;
     }
 
+    // Flujo original (Materialbeschaffung)
     this.router.navigate(["tabs/articals/artical-list/edit-artical"], {
       queryParams: {
         code: articalItem.code,
