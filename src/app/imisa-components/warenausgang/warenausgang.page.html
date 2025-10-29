@@ -1,6 +1,17 @@
 <ion-header>
   <ion-toolbar color="dark" class="ion-color ion-color-dark">
-    <ion-buttons slot="secondary">
+    <!-- BACK solo en flujo de artículo/grupo; vuelve a categorías -->
+    <ion-buttons slot="start" *ngIf="inArticleFlow">
+      <ion-back-button
+        [text]="''"
+        [defaultHref]="defaultBackHref"
+        (click)="goBackFromDetail()"
+      >
+      </ion-back-button>
+    </ion-buttons>
+
+    <!-- Botón Home solo cuando NO estás en detalle/grupo -->
+    <ion-buttons slot="secondary" *ngIf="!inArticleFlow">
       <ion-button fill="solid" routerLink="/home" routerDirection="root">
         <ion-icon slot="start" color="primary" name="home"></ion-icon>
         Misa&nbsp;&nbsp;
@@ -82,7 +93,7 @@
     </ion-card-content>
   </ion-card>
 
-  <!-- DETALLE TIPO COMPRA (clonado visual de item-edit) -->
+  <!-- DETALLE TIPO COMPRA -->
   <ng-container *ngIf="detailProduct && !groupActive">
     <ion-row>
       <ion-col>
@@ -102,10 +113,10 @@
     </ion-row>
     <ion-row>
       <ion-col>
-        <label
-          >{{ detailProduct.boundPCatagoryDescription ||
-          detailProduct.boundPCatCode }}</label
-        >
+        <label>
+          {{ detailProduct.boundPCatagoryDescription ||
+          detailProduct.boundPCatCode }}
+        </label>
       </ion-col>
     </ion-row>
 
@@ -190,11 +201,7 @@
         </ion-button>
       </ion-col>
       <ion-col size="auto">
-        <ion-button
-          fill="outline"
-          expand="block"
-          (click)="detailProduct = null"
-        >
+        <ion-button fill="outline" expand="block" (click)="goBackFromDetail()">
           Abbrechen
         </ion-button>
       </ion-col>
@@ -205,10 +212,9 @@
   <ion-card *ngIf="groupActive">
     <ion-card-header>
       <ion-card-title>Gruppeneingabe</ion-card-title>
-      <ion-card-subtitle
-        >Artikel {{ groupIndex + 1 }} / {{ groupProducts.length
-        }}</ion-card-subtitle
-      >
+      <ion-card-subtitle>
+        Artikel {{ groupIndex + 1 }} / {{ groupProducts.length }}
+      </ion-card-subtitle>
     </ion-card-header>
     <ion-card-content *ngIf="groupCurrent">
       <ion-item>
@@ -267,7 +273,7 @@
     </ion-card-content>
   </ion-card>
 
-  <!-- Carrito con descripciones + swipe-to-delete -->
+  <!-- Carrito -->
   <ion-list inset="true">
     <ion-item-sliding *ngFor="let ln of lines; let i = index">
       <ion-item
@@ -312,7 +318,6 @@
     </ion-item>
   </ion-list>
 
-  <!-- Panel de edición del carrito -->
   <ion-card *ngIf="selectedIndex !== null && lines[selectedIndex] as sel">
     <ion-card-header>
       <ion-card-title>Position bearbeiten</ion-card-title>
