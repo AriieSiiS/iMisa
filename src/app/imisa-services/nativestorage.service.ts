@@ -38,12 +38,11 @@ export class NativestorageService {
   }
 
   async hasAllDataSaved(): Promise<boolean> {
+    // Solo validar los datos REALMENTE necesarios para materialbeschaffung
+    // Otros datos (accounts, rights, mawimatgroup) son opcionales y se descargan en background
     const keys = [
-      "products",
-      "boundpcatcode",
-      "accounts",
-      "rights",
-      "mawimatgroup",
+      "products",      // Usado por ProductService, artical-list, warenausgang
+      "boundpcatcode"  // Usado por BoundPcatService, categorías
     ];
 
     for (let key of keys) {
@@ -53,10 +52,7 @@ export class NativestorageService {
       if (!data) {
         isValid = false;
       } else if (Array.isArray(data) && data.length === 0) {
-        // Allow 'accounts' to be an empty array for now for debugging
-        if (key !== "accounts") {
-          isValid = false;
-        }
+        isValid = false;
       } else if (
         typeof data === "object" &&
         !Array.isArray(data) &&
@@ -66,6 +62,7 @@ export class NativestorageService {
       }
 
       if (!isValid) {
+        console.warn(`[Storage] Validación falló para key "${key}"`);
         return false;
       }
     }
