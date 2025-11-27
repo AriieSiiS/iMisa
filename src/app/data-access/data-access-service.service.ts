@@ -126,6 +126,39 @@ export class DataAccessServiceService {
     }
   }
 
+  async testServerConnection(): Promise<boolean> {
+    try {
+      const serverUrl = await this.commonService.getServerUrl();
+      const user = await this.commonService.getRestUser();
+      const pass = await this.commonService.getRestPassword();
+
+      if (!serverUrl || !serverUrl.trim()) {
+        return false;
+      }
+
+      // Intentar hacer un simple GET request al endpoint API con timeout corto
+      const url = `${serverUrl}/api/iMisa?type=test`;
+      const headers = new HttpHeaders({
+        Authorization: "Basic " + btoa(`${user}:${pass}`),
+      });
+
+      // Timeout de 5 segundos para el test de conexión
+      const testPromise = lastValueFrom(
+        this.http.get(url, { headers, observe: 'response' })
+      );
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Connection timeout')), 5000)
+      );
+
+      await Promise.race([testPromise, timeoutPromise]);
+      return true;
+    } catch (error) {
+      console.error('[Server Test] Error de conexión:', error);
+      return false;
+    }
+  }
+
   async postOrderToApi(
     boundPcatCode: string,
     accountNumber: string,

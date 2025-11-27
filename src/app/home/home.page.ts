@@ -109,6 +109,23 @@ export class HomePage implements OnInit {
     const orders: Order[] = await this.orderService.getOrder();
 
     if (orders.length > 0) {
+      // Validar conexión con el servidor ANTES de intentar enviar
+      await this.commonService.showLoader("Prüfe Serververbindung...");
+      const serverReachable = await this.dataAccessServiceService.testServerConnection();
+      await this.commonService.hideLoader();
+
+      if (!serverReachable) {
+        await this.commonService.showAlertMessage(
+          "Keine Verbindung zum Server möglich. Bitte überprüfen Sie:\n\n" +
+          "1. Server-URL in den Einstellungen\n" +
+          "2. Internetverbindung\n" +
+          "3. Server ist erreichbar\n\n" +
+          "Der Auftrag wurde NICHT gesendet.",
+          "Verbindungsfehler"
+        );
+        return;
+      }
+
       const boundPcatCode = orders[0]?.boundPCatCode?.toString() ?? "0";
       const accountNumber = orders[0]?.accountno?.toString() ?? "0";
       const orderLines = this.mapOrdersToApiLines(orders);
