@@ -26,6 +26,8 @@ export class CommonService {
   public readonly SERVER_URL = "API_SERVER_URL";
   public readonly REST_USER = "REST_USER";
   public readonly REST_PASSWORD = "REST_PASSWORD";
+  public readonly LAST_SYNC_DATE = "LAST_SYNC_DATE";
+  public readonly AUTO_SYNC_DAYS = 7; // Días entre sincronizaciones automáticas
   public CURRNET_BOUND_PCAT_CODE = -1;
 
   private initializationCompleted: Promise<void>;
@@ -248,5 +250,41 @@ export class CommonService {
   public async isCameraScanningEnabled(): Promise<boolean> {
     await this.ensureInitialized();
     return this.canUseCameraScanning;
+  }
+
+  public async getLastSyncDate(): Promise<Date | null> {
+    await this.ensureInitialized();
+    try {
+      const dateString = await this.nativestorageService.getNativeValue(
+        this.LAST_SYNC_DATE
+      );
+      return dateString ? new Date(dateString) : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  public async setLastSyncDate(date: Date = new Date()): Promise<void> {
+    await this.ensureInitialized();
+    await this.nativestorageService.setNativeValue(
+      this.LAST_SYNC_DATE,
+      date.toISOString()
+    );
+  }
+
+  public async shouldAutoSync(): Promise<boolean> {
+    const lastSync = await this.getLastSyncDate();
+
+    // Si nunca se ha sincronizado, no forzar (mantener datos existentes)
+    if (!lastSync) {
+      return false;
+    }
+
+    // Calcular días desde última sincronización
+    const now = new Date();
+    const diffMs = now.getTime() - lastSync.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    return diffDays >= this.AUTO_SYNC_DAYS;
   }
 }

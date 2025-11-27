@@ -8,6 +8,19 @@ export class NativestorageService {
   constructor(private nativeStorege: NativeStorage) {}
 
   async setNativeValue(key: string, value: any) {
+    // Protección: NO sobrescribir datos existentes con valores vacíos o inválidos
+    if (value === null || value === undefined) {
+      console.warn(`[Storage] Intento de guardar valor null/undefined en key "${key}". Se mantienen datos anteriores.`);
+      return;
+    }
+
+    // Protección: NO sobrescribir con arrays vacíos (excepto para "accounts" que puede estar vacío)
+    if (Array.isArray(value) && value.length === 0 && key !== "accounts") {
+      console.warn(`[Storage] Intento de guardar array vacío en key "${key}". Se mantienen datos anteriores.`);
+      return;
+    }
+
+    // Si el valor es válido, guardar
     await this.nativeStorege.setItem(key, value);
   }
 

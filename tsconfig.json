@@ -12,7 +12,7 @@
     "declaration": false,
     "types": [],
     "lib": [
-      "es2018",
+      "es2020",
       "dom"
     ],
     "useDefineForClassFields": false
