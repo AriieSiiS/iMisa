@@ -35,34 +35,70 @@ export class FileUpdatesService {
         .getProductsRest()
         .then((data) =>
           this.nativeStorageService.setNativeValue("products", data)
-        ),
+        )
+        .catch((err) => {
+          console.error("[Sync] Error descargando products:", err);
+          return null;
+        }),
       this.dataAccessServiceService
         .getBoundPcatCodeRest()
         .then((data) =>
           this.nativeStorageService.setNativeValue("boundpcatcode", data)
-        ),
+        )
+        .catch((err) => {
+          console.error("[Sync] Error descargando boundpcatcode:", err);
+          return null;
+        }),
       this.dataAccessServiceService
         .getAccountsRest()
         .then((data) =>
           this.nativeStorageService.setNativeValue("accounts", data)
-        ),
+        )
+        .catch((err) => {
+          console.error("[Sync] Error descargando accounts:", err);
+          return null;
+        }),
       this.dataAccessServiceService
         .getRightsRest()
         .then((data) =>
           this.nativeStorageService.setNativeValue("rights", data)
-        ),
+        )
+        .catch((err) => {
+          console.error("[Sync] Error descargando rights:", err);
+          return null;
+        }),
       this.dataAccessServiceService
         .getMawiMatGroupRest()
         .then((data) =>
           this.nativeStorageService.setNativeValue("mawimatgroup", data)
-        ),
+        )
+        .catch((err) => {
+          console.error("[Sync] Error descargando mawimatgroup:", err);
+          return null;
+        }),
     ];
 
     try {
-      await Promise.all(dataFetchPromises);
+      // Usar Promise.allSettled para que si una falla, las demás continúen
+      const results = await Promise.allSettled(dataFetchPromises);
+
+      // Contar cuántas tuvieron éxito
+      const successful = results.filter(r => r.status === 'fulfilled').length;
+      const failed = results.filter(r => r.status === 'rejected').length;
+
+      console.log(`[Sync] Resultado: ${successful} exitosas, ${failed} fallidas de ${results.length} total`);
+
+      // Si hubo al menos una descarga exitosa, actualizar timestamp de última sincronización
+      if (successful > 0) {
+        await this.commonService.setLastSyncDate();
+      }
+
       if (showLoader) await this.commonService.hideLoader();
-      return true;
+
+      // Retornar true si al menos algunas tuvieron éxito
+      return successful > 0;
     } catch (error) {
+      console.error("[Sync] Error inesperado en fetchAndSaveAllFiles:", error);
       if (showLoader) await this.commonService.hideLoader();
       return false;
     }

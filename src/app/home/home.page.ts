@@ -74,6 +74,8 @@ export class HomePage implements OnInit {
       const dataOk = await this.fileUpdatesService.fetchAndSaveAllFiles(true);
 
       if (dataOk) {
+        // Establecer timestamp de primera sincronización exitosa
+        await this.commonService.setLastSyncDate();
         await this.commonService.showAlertMessage(
           "Initialdaten wurden heruntergeladen. Die App kann jetzt offline verwendet werden.",
           "iMisa"
@@ -122,10 +124,27 @@ export class HomePage implements OnInit {
         await this.orderService.saveOrderToHistory(orders, userName);
         await this.orderService.clearAll();
 
-        await this.fileUpdatesService.fetchAndSaveAllFiles();
+        // Re-descarga condicional: solo si han pasado AUTO_SYNC_DAYS días desde la última sincronización
+        const shouldSync = await this.commonService.shouldAutoSync();
+        let syncMessage = "";
+
+        if (shouldSync) {
+          console.log("[Home] Auto-sync activado, descargando actualizaciones...");
+          try {
+            const syncSuccess = await this.fileUpdatesService.fetchAndSaveAllFiles(false);
+            if (syncSuccess) {
+              syncMessage = " Die Daten wurden aktualisiert.";
+            } else {
+              syncMessage = " (Warnung: Datenaktualisierung fehlgeschlagen, vorherige Daten beibehalten)";
+            }
+          } catch (error) {
+            console.error("[Home] Error en auto-sync:", error);
+            syncMessage = " (Warnung: Datenaktualisierung fehlgeschlagen, vorherige Daten beibehalten)";
+          }
+        }
 
         await this.commonService.showAlertMessage(
-          "Der Auftrag wurde erfolgreich übermittelt, im Verlauf gespeichert und die Daten wurden aktualisiert.",
+          `Der Auftrag wurde erfolgreich übermittelt und im Verlauf gespeichert.${syncMessage}`,
           "iMisa"
         );
       } catch (error) {
