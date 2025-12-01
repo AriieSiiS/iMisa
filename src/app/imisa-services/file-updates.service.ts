@@ -30,73 +30,90 @@ export class FileUpdatesService {
       await this.commonService.showLoader("Lade Daten vom Server...");
     }
 
-    const dataFetchPromises = [
-      this.dataAccessServiceService
-        .getProductsRest()
-        .then((data) =>
-          this.nativeStorageService.setNativeValue("products", data)
-        )
-        .catch((err) => {
-          console.error("[Sync] Error descargando products:", err);
-          return null;
-        }),
-      this.dataAccessServiceService
-        .getBoundPcatCodeRest()
-        .then((data) =>
-          this.nativeStorageService.setNativeValue("boundpcatcode", data)
-        )
-        .catch((err) => {
-          console.error("[Sync] Error descargando boundpcatcode:", err);
-          return null;
-        }),
-      this.dataAccessServiceService
-        .getAccountsRest()
-        .then((data) =>
-          this.nativeStorageService.setNativeValue("accounts", data)
-        )
-        .catch((err) => {
-          console.error("[Sync] Error descargando accounts:", err);
-          return null;
-        }),
-      this.dataAccessServiceService
-        .getRightsRest()
-        .then((data) =>
-          this.nativeStorageService.setNativeValue("rights", data)
-        )
-        .catch((err) => {
-          console.error("[Sync] Error descargando rights:", err);
-          return null;
-        }),
-      this.dataAccessServiceService
-        .getMawiMatGroupRest()
-        .then((data) =>
-          this.nativeStorageService.setNativeValue("mawimatgroup", data)
-        )
-        .catch((err) => {
-          console.error("[Sync] Error descargando mawimatgroup:", err);
-          return null;
-        }),
-    ];
+    // Tracking de datos esenciales vs opcionales
+    let productsSuccess = false;
+    let boundPcatSuccess = false;
 
     try {
-      // Usar Promise.allSettled para que si una falla, las demás continúen
-      const results = await Promise.allSettled(dataFetchPromises);
+      // Descargar products (ESENCIAL)
+      try {
+        console.log("[Sync] Descargando products...");
+        const products = await this.dataAccessServiceService.getProductsRest();
+        console.log(`[Sync] Products recibidos: ${Array.isArray(products) ? products.length : 'no array'}`);
+        if (products && Array.isArray(products) && products.length > 0) {
+          await this.nativeStorageService.setNativeValue("products", products);
+          productsSuccess = true;
+          console.log("[Sync] Products guardados exitosamente");
+        } else {
+          console.warn("[Sync] Products está vacío o no es válido");
+        }
+      } catch (err) {
+        console.error("[Sync] Error descargando products:", err);
+      }
 
-      // Contar cuántas tuvieron éxito
-      const successful = results.filter(r => r.status === 'fulfilled').length;
-      const failed = results.filter(r => r.status === 'rejected').length;
+      // Descargar boundpcatcode (ESENCIAL)
+      try {
+        console.log("[Sync] Descargando boundpcatcode...");
+        const boundPcat = await this.dataAccessServiceService.getBoundPcatCodeRest();
+        console.log(`[Sync] BoundPcat recibidos: ${Array.isArray(boundPcat) ? boundPcat.length : 'no array'}`);
+        if (boundPcat && Array.isArray(boundPcat) && boundPcat.length > 0) {
+          await this.nativeStorageService.setNativeValue("boundpcatcode", boundPcat);
+          boundPcatSuccess = true;
+          console.log("[Sync] BoundPcat guardados exitosamente");
+        } else {
+          console.warn("[Sync] BoundPcat está vacío o no es válido");
+        }
+      } catch (err) {
+        console.error("[Sync] Error descargando boundpcatcode:", err);
+      }
 
-      console.log(`[Sync] Resultado: ${successful} exitosas, ${failed} fallidas de ${results.length} total`);
+      // Descargar datos opcionales (NO bloquean el resultado)
+      try {
+        console.log("[Sync] Descargando accounts...");
+        const accounts = await this.dataAccessServiceService.getAccountsRest();
+        if (accounts) {
+          await this.nativeStorageService.setNativeValue("accounts", accounts);
+          console.log("[Sync] Accounts guardados");
+        }
+      } catch (err) {
+        console.error("[Sync] Error descargando accounts:", err);
+      }
 
-      // Si hubo al menos una descarga exitosa, actualizar timestamp de última sincronización
-      if (successful > 0) {
+      try {
+        console.log("[Sync] Descargando rights...");
+        const rights = await this.dataAccessServiceService.getRightsRest();
+        if (rights) {
+          await this.nativeStorageService.setNativeValue("rights", rights);
+          console.log("[Sync] Rights guardados");
+        }
+      } catch (err) {
+        console.error("[Sync] Error descargando rights:", err);
+      }
+
+      try {
+        console.log("[Sync] Descargando mawimatgroup...");
+        const mawimat = await this.dataAccessServiceService.getMawiMatGroupRest();
+        if (mawimat) {
+          await this.nativeStorageService.setNativeValue("mawimatgroup", mawimat);
+          console.log("[Sync] Mawimatgroup guardados");
+        }
+      } catch (err) {
+        console.error("[Sync] Error descargando mawimatgroup:", err);
+      }
+
+      // Verificar si los datos ESENCIALES fueron descargados
+      const essentialDataSuccess = productsSuccess && boundPcatSuccess;
+
+      console.log(`[Sync] Resultado final: products=${productsSuccess}, boundpcatcode=${boundPcatSuccess}, esencial=${essentialDataSuccess}`);
+
+      if (essentialDataSuccess) {
         await this.commonService.setLastSyncDate();
       }
 
       if (showLoader) await this.commonService.hideLoader();
 
-      // Retornar true si al menos algunas tuvieron éxito
-      return successful > 0;
+      // Retornar true SOLO si los datos esenciales fueron descargados
+      return essentialDataSuccess;
     } catch (error) {
       console.error("[Sync] Error inesperado en fetchAndSaveAllFiles:", error);
       if (showLoader) await this.commonService.hideLoader();

@@ -15,6 +15,7 @@ import { OrderService } from "../imisa-services/order.service";
 })
 export class HomePage implements OnInit {
   _uniqueDeviceId: string = "";
+  private isSubmitting: boolean = false;
 
   constructor(
     private router: Router,
@@ -68,114 +69,137 @@ export class HomePage implements OnInit {
   }
 
   async submitOrder() {
-    const hasData = await this.nativeStorageService.hasAllDataSaved();
-
-    if (!hasData) {
-      const dataOk = await this.fileUpdatesService.fetchAndSaveAllFiles(true);
-
-      if (dataOk) {
-        // Establecer timestamp de primera sincronización exitosa
-        await this.commonService.setLastSyncDate();
-        await this.commonService.showAlertMessage(
-          "Initialdaten wurden heruntergeladen. Die App kann jetzt offline verwendet werden.",
-          "iMisa"
-        );
-      } else {
-        await this.commonService.showAlertMessage(
-          "Fehler beim Herunterladen der Initialdaten. Bitte Internetverbindung und Server prüfen.",
-          "iMisa"
-        );
-      }
+    // Prevenir múltiples envíos simultáneos
+    if (this.isSubmitting) {
+      console.log("[Home] submitOrder ya está en ejecución, ignorando click duplicado");
       return;
     }
 
-    let userName: any;
+    this.isSubmitting = true;
+
     try {
-      userName = await this.nativeStorageService.getNativeValue(
-        this.commonService.USER_INITIAL
-      );
-    } catch (error) {
-      userName = "";
-    }
+      const hasData = await this.nativeStorageService.hasAllDataSaved();
 
-    if (!userName || userName.length <= 0) {
-      await this.commonService.showAlertMessage(
-        "Bitte geben Sie die Initialen des Benutzers in den App-Einstellungen ein.",
-        "iMisa"
-      );
-      return;
-    }
+      if (!hasData) {
+        console.log("[Home] No hay datos locales, intentando descargar...");
+        const dataOk = await this.fileUpdatesService.fetchAndSaveAllFiles(true);
 
-    const orders: Order[] = await this.orderService.getOrder();
+        if (dataOk) {
+          // Verificar que los datos realmente se guardaron
+          const dataVerified = await this.nativeStorageService.hasAllDataSaved();
 
-    if (orders.length > 0) {
-      // Validar conexión con el servidor ANTES de intentar enviar
-      await this.commonService.showLoader("Prüfe Serververbindung...");
-      const serverReachable = await this.dataAccessServiceService.testServerConnection();
-      await this.commonService.hideLoader();
-
-      if (!serverReachable) {
-        await this.commonService.showAlertMessage(
-          "Keine Verbindung zum Server möglich. Bitte überprüfen Sie:\n\n" +
-          "1. Server-URL in den Einstellungen\n" +
-          "2. Internetverbindung\n" +
-          "3. Server ist erreichbar\n\n" +
-          "Der Auftrag wurde NICHT gesendet.",
-          "Verbindungsfehler"
-        );
+          if (dataVerified) {
+            console.log("[Home] Datos descargados y verificados correctamente");
+            await this.commonService.showAlertMessage(
+              "Initialdaten wurden heruntergeladen. Die App kann jetzt offline verwendet werden.",
+              "iMisa"
+            );
+          } else {
+            console.error("[Home] Descarga reportó éxito pero los datos no están disponibles");
+            await this.commonService.showAlertMessage(
+              "Fehler beim Speichern der Initialdaten. Bitte erneut versuchen.",
+              "iMisa"
+            );
+          }
+        } else {
+          console.error("[Home] Fehler beim Herunterladen der Initialdaten");
+          await this.commonService.showAlertMessage(
+            "Fehler beim Herunterladen der Initialdaten (products oder boundpcatcode). Bitte Internetverbindung und Server prüfen.",
+            "iMisa"
+          );
+        }
+        this.isSubmitting = false;
         return;
       }
 
-      const boundPcatCode = orders[0]?.boundPCatCode?.toString() ?? "0";
-      const accountNumber = orders[0]?.accountno?.toString() ?? "0";
-      const orderLines = this.mapOrdersToApiLines(orders);
-
+      let userName: any;
       try {
-        await this.dataAccessServiceService.postOrderToApi(
-          boundPcatCode,
-          accountNumber,
-          userName,
-          orderLines
-        );
-
-        await this.orderService.saveOrderToHistory(orders, userName);
-        await this.orderService.clearAll();
-
-        // Re-descarga condicional: solo si han pasado AUTO_SYNC_DAYS días desde la última sincronización
-        const shouldSync = await this.commonService.shouldAutoSync();
-        let syncMessage = "";
-
-        if (shouldSync) {
-          console.log("[Home] Auto-sync activado, descargando actualizaciones...");
-          try {
-            const syncSuccess = await this.fileUpdatesService.fetchAndSaveAllFiles(false);
-            if (syncSuccess) {
-              syncMessage = " Die Daten wurden aktualisiert.";
-            } else {
-              syncMessage = " (Warnung: Datenaktualisierung fehlgeschlagen, vorherige Daten beibehalten)";
-            }
-          } catch (error) {
-            console.error("[Home] Error en auto-sync:", error);
-            syncMessage = " (Warnung: Datenaktualisierung fehlgeschlagen, vorherige Daten beibehalten)";
-          }
-        }
-
-        await this.commonService.showAlertMessage(
-          `Der Auftrag wurde erfolgreich übermittelt und im Verlauf gespeichert.${syncMessage}`,
-          "iMisa"
+        userName = await this.nativeStorageService.getNativeValue(
+          this.commonService.USER_INITIAL
         );
       } catch (error) {
+        userName = "";
+      }
+
+      if (!userName || userName.length <= 0) {
         await this.commonService.showAlertMessage(
-          "Fehler beim Senden des Auftrags: " + (error?.message || error),
+          "Bitte geben Sie die Initialen des Benutzers in den App-Einstellungen ein.",
+          "iMisa"
+        );
+        this.isSubmitting = false;
+        return;
+      }
+
+      const orders: Order[] = await this.orderService.getOrder();
+
+      if (orders.length > 0) {
+        // Validar conexión con el servidor ANTES de intentar enviar
+        await this.commonService.showLoader("Prüfe Serververbindung...");
+        const serverReachable = await this.dataAccessServiceService.testServerConnection();
+        await this.commonService.hideLoader();
+
+        if (!serverReachable) {
+          await this.commonService.showAlertMessage(
+            "Keine Verbindung zum Server möglich. Bitte überprüfen Sie:\n\n" +
+            "1. Server-URL in den Einstellungen\n" +
+            "2. Internetverbindung\n" +
+            "3. Server ist erreichbar\n\n" +
+            "Der Auftrag wurde NICHT gesendet.",
+            "Verbindungsfehler"
+          );
+          this.isSubmitting = false;
+          return;
+        }
+
+        const boundPcatCode = orders[0]?.boundPCatCode?.toString() ?? "0";
+        const accountNumber = orders[0]?.accountno?.toString() ?? "0";
+        const orderLines = this.mapOrdersToApiLines(orders);
+
+        try {
+          console.log("[Home] Enviando pedido al servidor...");
+          await this.commonService.showLoader("Sende Auftrag...");
+
+          await this.dataAccessServiceService.postOrderToApi(
+            boundPcatCode,
+            accountNumber,
+            userName,
+            orderLines
+          );
+
+          console.log("[Home] Pedido enviado exitosamente, guardando en historial...");
+          await this.orderService.saveOrderToHistory(orders, userName);
+          await this.orderService.clearAll();
+
+          await this.commonService.hideLoader();
+          console.log("[Home] Mostrando mensaje de confirmación...");
+
+          // IMPORTANTE: NO hacer auto-sync aquí para evitar borrar datos
+          // El auto-sync se puede hacer manualmente desde Settings si es necesario
+          await this.commonService.showAlertMessage(
+            "Der Auftrag wurde erfolgreich übermittelt und im Verlauf gespeichert.",
+            "iMisa"
+          );
+
+          console.log("[Home] Mensaje de confirmación mostrado");
+        } catch (error) {
+          await this.commonService.hideLoader();
+          console.error("[Home] Error al enviar pedido:", error);
+          await this.commonService.showAlertMessage(
+            "Fehler beim Senden des Auftrags: " + (error?.message || error),
+            "iMisa"
+          );
+        }
+      } else {
+        console.log("[Home] No hay pedidos para enviar");
+        await this.commonService.showAlertMessage(
+          "Kein Auftrag zum Übermitteln.",
           "iMisa"
         );
       }
-    } else {
-      //await this.fileUpdatesService.fetchAndSaveAllFiles();
-      /*await this.commonService.showAlertMessage(
-        "Kein Auftrag zum Übermitteln. Die Daten wurden aktualisiert.",
-        "iMisa"
-      );*/
+    } finally {
+      // SIEMPRE liberar el flag, incluso si hay error
+      this.isSubmitting = false;
+      console.log("[Home] submitOrder finalizado, flag liberado");
     }
   }
 
