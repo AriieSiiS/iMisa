@@ -21,16 +21,21 @@
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
-
-  <!-- Mostrar Lagerort por defecto (si existe) -->
-  <ion-toolbar *ngIf="defaultWarehouse !== null">
-    <ion-title size="small">
-      Standard-Lagerort (Device): {{ defaultWarehouse }}
-    </ion-title>
-  </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding">
+  <!-- Editable Lagerort -->
+  <ion-item lines="full" *ngIf="editableLagerort !== null">
+    <ion-label position="floating">Lageort</ion-label>
+    <ion-input
+      type="number"
+      inputmode="numeric"
+      [(ngModel)]="editableLagerort"
+      placeholder="Lageort eingeben"
+    >
+    </ion-input>
+  </ion-item>
+
   <!-- Entrada manual / Scan -->
   <ion-card>
     <ion-card-header>
@@ -59,7 +64,7 @@
         <ion-button (click)="parseManual()">Übernehmen</ion-button>
         <ion-button
           color="success"
-          (click)="addFromParsed(1)"
+          (click)="addFromParsed()"
           [disabled]="!lastParsed"
         >
           Hinzufügen

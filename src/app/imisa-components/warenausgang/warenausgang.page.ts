@@ -21,6 +21,8 @@ export class WarenausgangPage {
 
   // Lagerort por defecto leído de Settings
   defaultWarehouse: number | null = null;
+  // Lagerort editable por el usuario
+  editableLagerort: number | null = null;
 
   // Scan / entrada
   lastRaw: string = "";
@@ -72,6 +74,8 @@ export class WarenausgangPage {
 
   async ionViewWillEnter() {
     await this.loadDefaultWarehouse();
+    // Inicializar lagerort editable con el valor por defecto
+    this.editableLagerort = this.defaultWarehouse;
     await this.loadLines();
     await this.hydrateDescriptionsFromLines();
 
@@ -225,7 +229,7 @@ export class WarenausgangPage {
         return;
       }
       const boundCode = Number(raw);
-      const storagePlaceId = this.defaultWarehouse ?? 0;
+      const storagePlaceId = this.editableLagerort ?? this.defaultWarehouse ?? 0;
       await this.startGroupWizard(boundCode, storagePlaceId);
       return;
     }
@@ -318,7 +322,7 @@ export class WarenausgangPage {
     const storagePlaceId =
       this.lastParsed.storagePlaceId && this.lastParsed.storagePlaceId > 0
         ? this.lastParsed.storagePlaceId
-        : this.defaultWarehouse ?? 0;
+        : this.editableLagerort ?? this.defaultWarehouse ?? 0;
 
     const line: WarenausgangLine = {
       storagePlaceId,
@@ -359,7 +363,7 @@ export class WarenausgangPage {
     this.groupStoragePlaceId =
       storagePlaceId && storagePlaceId > 0
         ? storagePlaceId
-        : this.defaultWarehouse ?? 0;
+        : this.editableLagerort ?? this.defaultWarehouse ?? 0;
     this.groupConfirmed = [];
     this.groupIndex = 0;
     this.groupRemainderPending = null;
@@ -502,7 +506,7 @@ export class WarenausgangPage {
   }
 
   // ---------- Líneas (carrito) ----------
-  async addFromParsed(defaultQty: number = 1) {
+  async addFromParsed() {
     if (!this.lastParsed) {
       await this.common.showAlertMessage(
         "Kein gültiger Code vorhanden.",
@@ -511,15 +515,24 @@ export class WarenausgangPage {
       return;
     }
 
+    // Buscar el producto en el catálogo para obtener OrdStdQty
+    const product = await this.productService.getProductByCodeGlobal(
+      this.lastParsed.procCatCode
+    );
+
+    // Usar initQtyFromProduct para obtener la cantidad correcta (OrdStdQty, minqty, defaultqty, o 1)
+    const qty = product ? this.initQtyFromProduct(product) : 1;
+
+    // Usar editableLagerort en lugar de defaultWarehouse
     const storagePlaceId =
       this.lastParsed.storagePlaceId && this.lastParsed.storagePlaceId > 0
         ? this.lastParsed.storagePlaceId
-        : this.defaultWarehouse ?? this.lastParsed.storagePlaceId;
+        : this.editableLagerort ?? this.defaultWarehouse ?? 0;
 
     const line: WarenausgangLine = {
       storagePlaceId,
       procCatCode: this.lastParsed.procCatCode,
-      qty: defaultQty > 0 ? defaultQty : 1,
+      qty,
       leistungsdatum: null,
       medizinischIndiziert: false,
     };
