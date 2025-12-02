@@ -45,7 +45,7 @@ export class ArticalListPage implements OnInit {
   ionViewWillEnter() {
     this.commonService.currentPresentedPage = "artilcal-list";
     if (this.router.url.startsWith("/wa-tabs")) {
-      this.defaultBackLink = "/wa-tabs/order";
+      this.defaultBackLink = "/wa-tabs/articals";
     } else {
       this.defaultBackLink = "/tabs/articals";
     }
@@ -61,6 +61,7 @@ export class ArticalListPage implements OnInit {
       return;
     }
 
+    // Flujo original (Materialbeschaffung)
     this.router.navigate(["tabs/articals/artical-list/edit-artical"], {
       queryParams: {
         code: articalItem.code,
@@ -79,6 +80,12 @@ export class ArticalListPage implements OnInit {
         );
         this.arrArticalsItem = products;
         this.arrArticalsItemMaster = products;
+        return;
+      }
+
+      // Entrada sin boundPcat dentro de WA → ir a categorías
+      if (this.router.url.startsWith("/wa-tabs")) {
+        this.router.navigate(["/wa-tabs/articals"], { replaceUrl: true });
         return;
       }
 
