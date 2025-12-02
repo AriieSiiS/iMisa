@@ -15,6 +15,13 @@ const routes: Routes = [
           ),
       },
       {
+        path: "articals",
+        loadChildren: () =>
+          import("../articals/articals.module").then(
+            (m) => m.ArticalsPageModule
+          ),
+      },
+      {
         path: "artical-list",
         loadChildren: () =>
           import("../artical-list/artical-list.module").then(
@@ -33,6 +40,13 @@ const routes: Routes = [
         loadChildren: () =>
           import("../app-settings/app-settings.module").then(
             (m) => m.AppSettingsPageModule
+          ),
+      },
+      {
+        path: "articals",
+        loadChildren: () =>
+          import("../articals/articals.module").then(
+            (m) => m.ArticalsPageModule
           ),
       },
       { path: "", redirectTo: "order", pathMatch: "full" },

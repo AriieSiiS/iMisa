@@ -7,7 +7,7 @@ import { ProductService } from "../../imisa-services/product.service";
 import { Product } from "../../models/product";
 import { WaHistoryService } from "../../imisa-services/wa-history.service";
 import { WarenausgangHistoryEntry } from "../../models/wa-history";
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 
 @Component({
   selector: "app-warenausgang",
@@ -19,29 +19,23 @@ export class WarenausgangPage {
   private readonly WA_LINES_KEY = "wa_lines";
   private readonly WAREHOUSE_LOCATION_KEY = "warehouse_location"; // Lagerort por dispositivo
 
-  // Lagerort por defecto leído de Settings
   defaultWarehouse: number | null = null;
   // Lagerort editable por el usuario
   editableLagerort: number | null = null;
 
-  // Scan / entrada
   lastRaw: string = "";
   lastParsed: { storagePlaceId: number; procCatCode: number } | null = null;
   manualCode: string = "";
 
-  // Estado de carrito
   lines: WarenausgangLine[] = [];
   selectedIndex: number | null = null;
 
-  // Edición actual (carrito)
   editQty: number | null = null;
   editLeistungsdatum: string | null = null; // yyyy-MM-dd
   editMedIndiziert: boolean = false;
 
-  // Split parcial
   splitQty: number | null = null;
 
-  // Detalle tipo "compra"
   detailProduct: Product | null = null;
   waQty: number | null = null;
   waDate: string | null = null;
@@ -60,7 +54,6 @@ export class WarenausgangPage {
   groupRemainderPending: { product: Product; qty: number } | null = null;
   groupManualConfirmCode: string = "";
 
-  // === NUEVO: caché de productos para mostrar descripción en carrito ===
   productDescMap: { [code: number]: string } = {};
 
   constructor(
@@ -69,8 +62,25 @@ export class WarenausgangPage {
     private native: NativestorageService,
     private productService: ProductService,
     private history: WaHistoryService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
+
+  // --- GETTERS para template ---
+  get inArticleFlow(): boolean {
+    // estamos en detalle (detailProduct) o en wizard de grupo, o se llegó por ?code
+    return (
+      !!this.detailProduct ||
+      !!this.groupActive ||
+      this.route.snapshot.queryParamMap.has("code")
+    );
+  }
+
+  get defaultBackHref(): string {
+    return this.router.url.startsWith("/wa-tabs")
+      ? "/wa-tabs/articals"
+      : "/tabs/articals";
+  }
 
   async ionViewWillEnter() {
     await this.loadDefaultWarehouse();
@@ -189,7 +199,6 @@ export class WarenausgangPage {
     return { qty, msg };
   }
 
-  // === NUEVO: hidratar descripciones para los códigos presentes en lines ===
   private async hydrateDescriptionsFromLines() {
     const unique = Array.from(
       new Set(this.lines.map((l) => Number(l.procCatCode)))
@@ -204,6 +213,32 @@ export class WarenausgangPage {
       } catch {
         this.productDescMap[code] = `#${code}`;
       }
+    }
+  }
+
+  // --- navegación custom “un nivel arriba” desde detalle/grupo ---
+  private clearCodeQueryParam() {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { code: null },
+      queryParamsHandling: "merge",
+      replaceUrl: true,
+    });
+  }
+
+  goBackFromDetail() {
+    // limpiar estado local de detalle/grupo
+    this.detailProduct = null;
+    this.groupActive = false;
+    this.groupRemainderPending = null;
+    this.groupManualConfirmCode = "";
+    this.clearCodeQueryParam();
+
+    // llevar a categorías, no al carrito
+    if (this.router.url.startsWith("/wa-tabs")) {
+      this.router.navigate(["/wa-tabs/articals"]);
+    } else {
+      this.router.navigate(["/tabs/articals"]);
     }
   }
 
@@ -604,7 +639,7 @@ export class WarenausgangPage {
     await this.common.showMessage("Position dupliziert.");
   }
 
-  // Split parcial (Teilen): mueve una parte a una nueva línea
+  // Split parcial (Teilen)
   async splitSelected() {
     if (this.selectedIndex === null) return;
     const ln = this.lines[this.selectedIndex];
@@ -629,7 +664,6 @@ export class WarenausgangPage {
       return;
     }
 
-    // Nueva línea con 'part'; la original queda con (current - part)
     ln.qty = current - part;
     const copy: WarenausgangLine = { ...ln, qty: part };
     this.lines.splice(this.selectedIndex + 1, 0, copy);
