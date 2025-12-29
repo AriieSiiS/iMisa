@@ -8,6 +8,7 @@ import { Product } from "../../models/product";
 import { WaHistoryService } from "../../imisa-services/wa-history.service";
 import { WarenausgangHistoryEntry } from "../../models/wa-history";
 import { ActivatedRoute, Router } from "@angular/router";
+import { Platform } from "@ionic/angular";
 
 @Component({
   selector: "app-warenausgang",
@@ -56,6 +57,8 @@ export class WarenausgangPage {
 
   productDescMap: { [code: number]: string } = {};
 
+  private backButtonSubscription: any;
+
   constructor(
     private barcodeScanner: BarcodeScanner,
     private common: CommonService,
@@ -63,7 +66,8 @@ export class WarenausgangPage {
     private productService: ProductService,
     private history: WaHistoryService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private platform: Platform
   ) {}
 
   // --- GETTERS para template ---
@@ -99,6 +103,29 @@ export class WarenausgangPage {
         };
         await this.openDetailForProcCat(c);
       }
+    }
+
+    // Manejar el botón físico "back" de Android
+    this.backButtonSubscription = this.platform.backButton.subscribeWithPriority(10, () => {
+      if (this.inArticleFlow) {
+        // Si estamos en detalle o grupo, volver a la lista
+        this.goBackFromDetail();
+      } else {
+        // Si estamos en la vista principal, comportamiento por defecto
+        // (navegar a la página anterior o salir)
+        if (this.router.url.startsWith("/wa-tabs")) {
+          this.router.navigate(["/wa-tabs/articals"]);
+        } else {
+          this.router.navigate(["/home"]);
+        }
+      }
+    });
+  }
+
+  ionViewWillLeave() {
+    // Limpiar subscription al salir
+    if (this.backButtonSubscription) {
+      this.backButtonSubscription.unsubscribe();
     }
   }
 
@@ -255,21 +282,33 @@ export class WarenausgangPage {
       return;
     }
 
-    if (raw.indexOf("#") === -1) {
-      if (!this.isAllDigits(raw)) {
+    // Normalizar: reemplazar espacios por # si hay patrón "número espacio número"
+    // Ejemplo: "3 105382" → "3#105382"
+    let normalized = raw;
+    const spacePattern = /^(\d+)\s+(\d+)$/;
+    const spaceMatch = raw.match(spacePattern);
+    if (spaceMatch) {
+      normalized = `${spaceMatch[1]}#${spaceMatch[2]}`;
+    }
+
+    if (normalized.indexOf("#") === -1) {
+      // No tiene separador, debe ser solo número (grupo)
+      const cleanedNum = normalized.replace(/\s+/g, "");
+      if (!this.isAllDigits(cleanedNum)) {
         await this.common.showAlertMessage(
-          "Ungültiges Format. Erwartet: Zahl (Group) oder Lagerort#Code.",
+          `Ungültiges Format.\n\nErwartet: Zahl (Group) oder Lagerort#Code.\n\nEscaneado: ${raw}`,
           "iMisa"
         );
         return;
       }
-      const boundCode = Number(raw);
+      const boundCode = Number(cleanedNum);
       const storagePlaceId = this.editableLagerort ?? this.defaultWarehouse ?? 0;
       await this.startGroupWizard(boundCode, storagePlaceId);
       return;
     }
 
-    const cleaned = raw.replace(/\s+/g, "");
+    // Tiene "#" (o fue normalizado desde espacio)
+    const cleaned = normalized.replace(/\s+/g, "");
     const parts = cleaned.split("#");
     if (
       parts.length !== 2 ||
@@ -277,7 +316,7 @@ export class WarenausgangPage {
       !this.isAllDigits(parts[1])
     ) {
       await this.common.showAlertMessage(
-        "Ungültiges Format (erwartet: Lagerort#Code).",
+        `Ungültiges Format (erwartet: Lagerort#Code).\n\nEscaneado: ${raw}\nNormalized: ${normalized}`,
         "iMisa"
       );
       return;
@@ -304,11 +343,14 @@ export class WarenausgangPage {
         showTorchButton: true,
         prompt: "QR/Code für Warenausgang scannen",
         resultDisplayDuration: 0,
-        formats: "QR_CODE,DATA_MATRIX,PDF_417,AZTEC,CODE_128,EAN_13",
+        formats: "QR_CODE,DATA_MATRIX,EAN_8,EAN_13,CODE_39,CODE_93,CODE_128,UPC_A,UPC_E,ITF,CODABAR,PDF_417,AZTEC",
         orientation: "portrait",
       });
       if (result?.cancelled) return;
-      await this.parseCode(result?.text || "");
+
+      const text = (result?.text || "").trim();
+
+      await this.parseCode(text);
     } catch (err) {
       await this.common.showErrorMessage(
         "Scan fehlgeschlagen: " + (err?.message || err)
@@ -492,7 +534,7 @@ export class WarenausgangPage {
         showTorchButton: true,
         prompt: "Restmenge bestätigen – Artikel scannen",
         resultDisplayDuration: 0,
-        formats: "QR_CODE,DATA_MATRIX,CODE_128,EAN_13",
+        formats: "QR_CODE,DATA_MATRIX,EAN_8,EAN_13,CODE_39,CODE_93,CODE_128,UPC_A,UPC_E,ITF,CODABAR,PDF_417,AZTEC",
         orientation: "portrait",
       });
       if (result?.cancelled) return;
