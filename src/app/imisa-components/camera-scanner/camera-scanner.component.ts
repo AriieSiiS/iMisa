@@ -36,9 +36,18 @@ export class CameraScannerComponent implements OnInit, OnDestroy {
     if (this.commonService.canUseCameraScanning) {
       if (!this.isWeb) {
         this.barcodeScanner
-          .scan()
+          .scan({
+            showFlipCameraButton: true,
+            showTorchButton: true,
+            prompt: "Escanear código QR o código de barras",
+            resultDisplayDuration: 0,
+            formats: "QR_CODE,DATA_MATRIX,EAN_8,EAN_13,CODE_39,CODE_93,CODE_128,UPC_A,UPC_E,ITF,CODABAR,PDF_417,AZTEC",
+            orientation: "portrait",
+          })
           .then(async (res) => {
-            this.addOrder(res.text);
+            if (!res.cancelled) {
+              this.addOrder(res.text);
+            }
           })
           .catch((err) => {
             //this.commonService.showErrorMessage("Error " + err);

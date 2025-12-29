@@ -311,11 +311,14 @@ export class InventoryPage {
         showTorchButton: true,
         prompt: "Artikel-Barcode scannen",
         resultDisplayDuration: 0,
+        formats: "QR_CODE,DATA_MATRIX,EAN_8,EAN_13,CODE_39,CODE_93,CODE_128,UPC_A,UPC_E,ITF,CODABAR,PDF_417,AZTEC",
+        orientation: "portrait",
       });
 
       if (result?.cancelled) return;
 
       const text = (result?.text || "").trim();
+
       if (!text) {
         await this.common.showAlertMessage("Kein Code erkannt.", "iMisa");
         return;
@@ -341,7 +344,10 @@ export class InventoryPage {
       }
 
       if (foundIndexGlobal === -1) {
-        await this.common.showAlertMessage("Artikel nicht gefunden.", "iMisa");
+        await this.common.showAlertMessage(
+          `Artikel: ${text}\n\nFormato: ${result?.format || 'desconocido'}\n\nnicht gefunden.`,
+          "iMisa"
+        );
         return;
       }
 
